@@ -18,15 +18,6 @@ def isoformat(value: datetime | None = None) -> str:
     return (value or utc_now()).isoformat().replace("+00:00", "Z")
 
 
-def parse_timestamp(value: str | None) -> datetime | None:
-    if not value:
-        return None
-    try:
-        return datetime.fromisoformat(value.replace("Z", "+00:00"))
-    except ValueError:
-        return None
-
-
 class ScoreboardState:
     def __init__(
         self,
@@ -39,6 +30,9 @@ class ScoreboardState:
         self.services = list(scoring_config["services"])
         self.one_time_services = set(scoring_config.get("one_time_services", []))
         self.one_time_points = int(scoring_config.get("one_time_points", 10))
+        self.first_login_points = int(
+            scoring_config.get("points_per_service_first_login", 10)
+        )
         self.persistence_path = persistence_path
         self.recent_events: list[dict[str, Any]] = []
         self.participants: dict[str, dict[str, Any]] = {}
@@ -51,8 +45,14 @@ class ScoreboardState:
                 "display_name": participant.get("display_name") or participant["name"],
                 "router_ip": router_ip,
                 "score": 0,
+                "score_updated_at": None,
                 "services": {
-                    service: {"status": "red", "last_seen": None}
+                    service: {
+                        "status": "red",
+                        "last_seen": None,
+                        "earned": False,
+                        "earned_at": None,
+                    }
                     for service in self.services
                 },
             }
@@ -81,11 +81,21 @@ class ScoreboardState:
             if not participant:
                 continue
             participant["score"] = int(saved_participant.get("score", 0))
+            participant["score_updated_at"] = saved_participant.get("score_updated_at")
             for service in self.services:
                 saved_service = saved_participant.get("services", {}).get(service, {})
-                if saved_service.get("status") in {"green", "red"}:
+                if saved_service.get("status") in {"green", "red", "logged"}:
                     participant["services"][service]["status"] = saved_service["status"]
                 participant["services"][service]["last_seen"] = saved_service.get("last_seen")
+                participant["services"][service]["earned"] = bool(
+                    saved_service.get(
+                        "earned",
+                        saved_service.get("status") in {"green", "logged"},
+                    )
+                )
+                participant["services"][service]["earned_at"] = saved_service.get(
+                    "earned_at"
+                )
 
         events = saved.get("recent_events", [])
         self.recent_events = events[-100:] if isinstance(events, list) else []
@@ -132,14 +142,36 @@ class ScoreboardState:
             ):
                 return False
 
+            first_success = status == "green" and not current_service["earned"]
+            if first_success:
+                points = (
+                    self.one_time_points
+                    if service in self.one_time_services
+                    else self.first_login_points
+                )
+                participant["score"] += points
+                if not participant["score_updated_at"]:
+                    participant["score_updated_at"] = received_at
+
+            if service in self.one_time_services:
+                display_status = "green"
+            elif status == "green":
+                display_status = "green"
+            elif current_service["earned"]:
+                display_status = "logged"
+            else:
+                display_status = "red"
+
             participant["services"][service] = {
-                "status": status,
+                "status": display_status,
                 # Freshness is based on when this process received the event.
                 # Device clocks may be offset or use a different timezone.
                 "last_seen": received_at,
+                "earned": current_service["earned"] or first_success,
+                "earned_at": (
+                    received_at if first_success else current_service["earned_at"]
+                ),
             }
-            if service in self.one_time_services and status == "green":
-                participant["score"] += self.one_time_points
             normalized = {
                 "timestamp": timestamp,
                 "received_at": received_at,
@@ -157,68 +189,17 @@ class ScoreboardState:
             self._persist_unlocked()
         return True
 
-    async def apply_score_tick(self) -> bool:
-        points = int(self.scoring["points_per_service_per_minute"])
-        changed = False
-        async with self.lock:
-            for participant in self.participants.values():
-                green_count = sum(
-                    1
-                    for service in self.services
-                    if service not in self.one_time_services
-                    if participant["services"][service]["status"] == "green"
-                )
-                if green_count:
-                    participant["score"] += green_count * points
-                    changed = True
-            if changed:
-                self._persist_unlocked()
-        return changed
-
-    async def expire_stale_services(self) -> bool:
-        timeout_seconds = int(self.scoring["service_timeout_seconds"])
-        now = utc_now()
-        changed = False
-
-        async with self.lock:
-            for participant in self.participants.values():
-                for service in self.services:
-                    if service in self.one_time_services:
-                        continue
-                    service_state = participant["services"][service]
-                    if service_state["status"] != "green":
-                        continue
-                    last_seen = parse_timestamp(service_state["last_seen"])
-                    if not last_seen or (now - last_seen).total_seconds() <= timeout_seconds:
-                        continue
-
-                    service_state["status"] = "red"
-                    event = {
-                        "timestamp": isoformat(now),
-                        "participant_ip": participant["router_ip"],
-                        "participant_name": participant["display_name"],
-                        "service": service,
-                        "status": "red",
-                        "event_type": "timeout",
-                        "username": None,
-                        "raw": f"Service timed out after {timeout_seconds} seconds without refresh",
-                    }
-                    self.recent_events.append(event)
-                    changed = True
-
-            if changed:
-                self.recent_events = self.recent_events[-100:]
-                self._persist_unlocked()
-        return changed
-
     async def reset(self) -> None:
         async with self.lock:
             for participant in self.participants.values():
                 participant["score"] = 0
+                participant["score_updated_at"] = None
                 for service in self.services:
                     participant["services"][service] = {
                         "status": "red",
                         "last_seen": None,
+                        "earned": False,
+                        "earned_at": None,
                     }
             self.recent_events = []
             self._persist_unlocked()
@@ -231,22 +212,19 @@ class ScoreboardState:
         participants.sort(
             key=lambda item: (
                 -item["score"],
-                -sum(
-                    service["status"] == "green"
-                    for service in item["services"].values()
-                ),
+                item["score_updated_at"] or "9999",
                 item["display_name"].lower(),
             )
         )
 
-        active_services = 0
+        completed_services = 0
         for rank, participant in enumerate(participants, start=1):
             participant["rank"] = rank
             participant["green_services_count"] = sum(
-                service["status"] == "green"
+                service["earned"]
                 for service in participant["services"].values()
             )
-            active_services += participant["green_services_count"]
+            completed_services += participant["green_services_count"]
             timestamps = [
                 service["last_seen"]
                 for service in participant["services"].values()
@@ -259,7 +237,7 @@ class ScoreboardState:
             "scoring": deepcopy(self.scoring),
             "summary": {
                 "participant_count": len(participants),
-                "active_services": active_services,
+                "active_services": completed_services,
                 "maximum_active_services": len(participants) * len(self.services),
                 "leader": participants[0]["display_name"] if participants else None,
                 "leader_score": participants[0]["score"] if participants else 0,

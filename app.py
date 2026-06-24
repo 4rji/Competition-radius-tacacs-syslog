@@ -7,7 +7,6 @@ import json
 import logging
 import os
 import random
-import time
 from contextlib import asynccontextmanager, suppress
 from pathlib import Path
 from typing import Any
@@ -17,7 +16,7 @@ from fastapi.responses import FileResponse
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel, Field
 
-from parsers import parse_log_line
+from parsers import parse_log_events
 from state import ScoreboardState
 
 
@@ -78,13 +77,10 @@ class ConnectionManager:
 
 
 connections = ConnectionManager()
-next_score_at = time.time() + int(SCORING_CONFIG["score_interval_seconds"])
 
 
 async def state_snapshot() -> dict[str, Any]:
-    snapshot = await scoreboard.snapshot()
-    snapshot["next_score_at"] = next_score_at
-    return snapshot
+    return await scoreboard.snapshot()
 
 
 async def broadcast_state() -> None:
@@ -92,14 +88,17 @@ async def broadcast_state() -> None:
 
 
 async def process_log_line(line: str) -> None:
-    event = parse_log_line(line)
-    if not event:
+    events = parse_log_events(line)
+    if not events:
         return
-    try:
-        changed = await scoreboard.apply_event(event)
-    except ValueError:
-        # Ignore valid-looking events from router IPs not assigned in users.json.
-        return
+
+    changed = False
+    for event in events:
+        try:
+            changed = await scoreboard.apply_event(event) or changed
+        except ValueError:
+            # Ignore valid-looking events from router IDs not assigned in users.json.
+            continue
     if changed:
         await broadcast_state()
 
@@ -176,31 +175,9 @@ async def live_log_reader(log_path: Path) -> None:
             await asyncio.sleep(2)
 
 
-async def score_loop() -> None:
-    global next_score_at
-    interval = int(SCORING_CONFIG["score_interval_seconds"])
-    next_score_at = time.time() + interval
-    while True:
-        await asyncio.sleep(max(0, next_score_at - time.time()))
-        changed = await scoreboard.apply_score_tick()
-        next_score_at = time.time() + interval
-        if changed:
-            await broadcast_state()
-
-
-async def timeout_loop() -> None:
-    while True:
-        await asyncio.sleep(1)
-        if await scoreboard.expire_stale_services():
-            await broadcast_state()
-
-
 @asynccontextmanager
 async def lifespan(_: FastAPI):
-    tasks = [
-        asyncio.create_task(score_loop()),
-        asyncio.create_task(timeout_loop()),
-    ]
+    tasks = []
     mode = os.environ.get("LOG_MODE", "demo").lower()
     if mode == "demo":
         tasks.append(asyncio.create_task(demo_log_reader()))

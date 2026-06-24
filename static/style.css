@@ -537,6 +537,16 @@ tr:first-child .rank-badge {
   background: var(--danger-soft);
 }
 
+.status-logged {
+  color: #e7b84f;
+  background: rgba(231, 184, 79, 0.13);
+}
+
+.status-logged::before {
+  background: #e7b84f;
+  box-shadow: 0 0 0 4px rgba(231, 184, 79, 0.13);
+}
+
 .status-red::before {
   background: var(--danger);
   box-shadow: 0 0 0 4px rgba(226, 77, 77, 0.11);

@@ -29,6 +29,12 @@ DIGI_SYSLOG_PATTERN = re.compile(
     r"(?P<host>[0-9A-F]{12})\s+",
     re.IGNORECASE,
 )
+DIGI_WEB_SESSION_PATTERN = re.compile(
+    rf"\buser\s+User\s+(?P<username>\S+)\s+"
+    rf"(?P<action>successfully\s+opened|logout)\s+web\s+session\s+"
+    rf"from(?:\s+IP)?\s+(?P<remote_ip>{IP_PATTERN})\b",
+    re.IGNORECASE,
+)
 
 
 def _search(pattern: str, line: str, flags: int = re.IGNORECASE) -> str | None:
@@ -102,6 +108,31 @@ def parse_syslog(line: str) -> dict[str, Any] | None:
         )
 
     return None
+
+
+def parse_digi_radius_session(line: str) -> dict[str, Any] | None:
+    """Treat adminradius Digi web sessions as RADIUS activity."""
+    digi_match = DIGI_SYSLOG_PATTERN.search(line)
+    session_match = DIGI_WEB_SESSION_PATTERN.search(line)
+    if (
+        not digi_match
+        or not session_match
+        or session_match.group("username").lower() != "adminradius"
+    ):
+        return None
+
+    is_login = session_match.group("action").lower().startswith("successfully")
+    return _event(
+        line=line,
+        participant_ip=None,
+        participant_id=digi_match.group("host"),
+        service="radius",
+        status="green" if is_login else "red",
+        event_type="web_session_opened" if is_login else "web_session_logout",
+        username=session_match.group("username"),
+        remote_ip=session_match.group("remote_ip"),
+        timestamp=_normalize_timestamp(digi_match.group("timestamp")),
+    )
 
 
 def parse_aaa_accounting(line: str) -> dict[str, Any] | None:
@@ -186,11 +217,32 @@ def parse_tacacs(line: str) -> dict[str, Any] | None:
 
 def parse_log_line(line: str) -> dict[str, Any] | None:
     """Run a line through each parser and return the first normalized event."""
-    if not line or not line.strip() or line.lstrip().startswith("#"):
-        return None
+    events = parse_log_events(line)
+    return events[0] if events else None
 
-    for parser in (parse_syslog, parse_aaa_accounting, parse_radius, parse_tacacs):
+
+def parse_log_events(line: str) -> list[dict[str, Any]]:
+    """Return all normalized events represented by one log line."""
+    if not line or not line.strip() or line.lstrip().startswith("#"):
+        return []
+
+    events: list[dict[str, Any]] = []
+    syslog_event = parse_syslog(line)
+    if syslog_event:
+        events.append(syslog_event)
+
+    digi_radius_event = parse_digi_radius_session(line)
+    if digi_radius_event:
+        events.append(digi_radius_event)
+
+    # A stored Digi line has already been fully classified above. The
+    # remaining parsers cover independent AAA, FreeRADIUS, and TACACS+ logs.
+    if syslog_event:
+        return events
+
+    for parser in (parse_aaa_accounting, parse_radius, parse_tacacs):
         event = parser(line)
         if event:
-            return event
-    return None
+            events.append(event)
+            break
+    return events

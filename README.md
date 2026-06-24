@@ -47,20 +47,19 @@ Edit `scoring.json`:
 
 ```json
 {
-  "points_per_service_per_minute": 10,
+  "points_per_service_first_login": 10,
   "one_time_points": 10,
   "one_time_services": ["syslog"],
-  "service_timeout_seconds": 300,
-  "score_interval_seconds": 180,
   "services": ["syslog", "radius", "tacacs"]
 }
 ```
 
 The first valid SYSLOG packet gives the participant `one_time_points` once.
-SYSLOG stays green and never times out; additional packets do not add points.
-Every three minutes, each other active green service awards
-`points_per_service_per_minute` points. A green service turns red when it has
-not received a refresh event within `service_timeout_seconds`.
+SYSLOG stays Active and never times out; additional packets do not add points.
+The first successful RADIUS login and the first successful TACACS+ login each
+award `points_per_service_first_login` immediately. Logout does not remove
+points: the service changes from Active to Logged to show that its challenge
+was completed. Later logins do not award duplicate points.
 
 Restart the application after changing scoring settings.
 
@@ -126,6 +125,13 @@ IP; the later IP is the remote client.
 
 The SSH/PAM copies in syslog are intentionally ignored to prevent duplicate
 TACACS+ events.
+
+Stored Digi SYSLOG lines also recognize web sessions for the `adminradius`
+user. A `successfully opened web session` message turns RADIUS green and a
+`logout web session` message turns it red. The participant is matched through
+the 12-character Digi hostname and its `syslog_host` entry in `users.json`.
+Existing RADIUS SSH accounting and native FreeRADIUS parsing continue to work
+unchanged.
 
 To select different or additional files, use a comma-separated list:
 
@@ -197,10 +203,12 @@ Do not use `users.json` as the state file.
 Parser functions and regular expressions are in `parsers.py`:
 
 - `parse_syslog(line)`
+- `parse_digi_radius_session(line)`
 - `parse_aaa_accounting(line)`
 - `parse_radius(line)`
 - `parse_tacacs(line)`
 - `parse_log_line(line)`
+- `parse_log_events(line)`
 
 When real device logs are available, adjust the regex patterns inside the
 service-specific parser. Each parser should continue returning this normalized

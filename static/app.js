@@ -28,9 +28,6 @@ const THEME_STORAGE_KEY = "digi-scoreboard-theme";
 let socket;
 let reconnectTimer;
 let pingTimer;
-let countdownTimer;
-let scoreInterval = null;
-let nextScoreAt = 0;
 let currentParticipants = [];
 let fireworksFrame;
 let fireworksStopTimer;
@@ -89,11 +86,15 @@ function titleCase(value) {
 }
 
 function statusPill(status) {
-  const active = status === "green";
+  const labels = {
+    green: "Active",
+    logged: "Logged",
+    red: "Inactive",
+  };
   return createElement(
     "span",
-    `status-pill ${active ? "status-green" : "status-red"}`,
-    active ? "Active" : "Inactive",
+    `status-pill status-${status || "red"}`,
+    labels[status] || "Inactive",
   );
 }
 
@@ -201,24 +202,13 @@ function renderState(state) {
     `${summary.active_services || 0} / ${summary.maximum_active_services || 0}`;
   elements.participantCount.textContent = summary.participant_count || 0;
 
-  scoreInterval = Number(scoring.score_interval_seconds || 60);
-  nextScoreAt = state.next_score_at
-    ? Number(state.next_score_at) * 1000
-    : Date.now() + scoreInterval * 1000;
+  elements.scoreCountdown.textContent = "Instant";
   elements.scoringRule.textContent =
-    `+${scoring.one_time_points || 10} first SYSLOG · +${scoring.points_per_service_per_minute || 0} every ${formatInterval(scoreInterval)} active`;
+    `+${scoring.one_time_points || 10} SYSLOG · +${scoring.points_per_service_first_login || 10} first RADIUS/TACACS login`;
   elements.lastUpdated.textContent = `Updated ${formatTime(state.updated_at)}`;
 
   renderParticipants(participants);
   renderEvents(state.recent_events || []);
-}
-
-function formatInterval(seconds) {
-  if (seconds % 60 === 0) {
-    const minutes = seconds / 60;
-    return `${minutes} min`;
-  }
-  return `${seconds} sec`;
 }
 
 function setConnection(status) {
@@ -269,18 +259,6 @@ async function loadInitialState() {
   } catch (error) {
     showToast(`Could not load scoreboard: ${error.message}`, true);
   }
-}
-
-function updateCountdown() {
-  if (!scoreInterval) {
-    elements.scoreCountdown.textContent = "—";
-    return;
-  }
-  const remaining = Math.max(0, Math.ceil((nextScoreAt - Date.now()) / 1000));
-  const minutes = Math.floor(remaining / 60);
-  const seconds = remaining % 60;
-  elements.scoreCountdown.textContent = `${minutes}:${String(seconds).padStart(2, "0")}`;
-  if (remaining === 0) nextScoreAt = Date.now() + scoreInterval * 1000;
 }
 
 function launchFireworks() {
@@ -429,5 +407,3 @@ elements.resetButton.addEventListener("click", async () => {
 applyTheme(document.documentElement.dataset.theme);
 loadInitialState();
 connectWebSocket();
-updateCountdown();
-countdownTimer = window.setInterval(updateCountdown, 1000);

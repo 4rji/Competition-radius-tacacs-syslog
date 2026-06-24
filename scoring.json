@@ -1,9 +1,7 @@
 {
-  "points_per_service_per_minute": 10,
+  "points_per_service_first_login": 10,
   "one_time_points": 10,
   "one_time_services": ["syslog"],
-  "service_timeout_seconds": 300,
-  "score_interval_seconds": 180,
   "services": [
     "syslog",
     "radius",
