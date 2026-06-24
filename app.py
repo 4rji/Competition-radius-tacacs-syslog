@@ -4,8 +4,10 @@ from __future__ import annotations
 
 import asyncio
 import json
+import logging
 import os
 import random
+import time
 from contextlib import asynccontextmanager, suppress
 from pathlib import Path
 from typing import Any
@@ -20,6 +22,7 @@ from state import ScoreboardState
 
 
 BASE_DIR = Path(__file__).resolve().parent
+logger = logging.getLogger("uvicorn.error")
 
 
 def load_json(path: Path) -> dict[str, Any]:
@@ -75,10 +78,17 @@ class ConnectionManager:
 
 
 connections = ConnectionManager()
+next_score_at = time.time() + int(SCORING_CONFIG["score_interval_seconds"])
+
+
+async def state_snapshot() -> dict[str, Any]:
+    snapshot = await scoreboard.snapshot()
+    snapshot["next_score_at"] = next_score_at
+    return snapshot
 
 
 async def broadcast_state() -> None:
-    await connections.broadcast(await scoreboard.snapshot())
+    await connections.broadcast(await state_snapshot())
 
 
 async def process_log_line(line: str) -> None:
@@ -112,34 +122,68 @@ async def demo_log_reader() -> None:
             return
 
 
-async def live_log_reader() -> None:
-    log_path = Path(os.environ.get("LOG_FILE", "/var/log/digi-demo.log"))
+def live_log_paths() -> list[Path]:
+    configured = os.environ.get("LIVE_LOG_FILES")
+    if configured:
+        values = configured.split(",")
+    elif os.environ.get("LOG_FILE"):
+        values = [os.environ["LOG_FILE"]]
+    else:
+        values = ["/var/log/syslog", "/var/log/tac_plus_acct.log"]
+    return [Path(value.strip()).expanduser() for value in values if value.strip()]
+
+
+async def live_log_reader(log_path: Path) -> None:
     start_at_end = os.environ.get("LIVE_FROM_START", "false").lower() not in {
         "1",
         "true",
         "yes",
     }
+    opened_once = False
+    last_error: str | None = None
 
     while True:
         try:
             with log_path.open(encoding="utf-8", errors="replace") as file:
-                if start_at_end:
+                if last_error:
+                    logger.info("Now tailing %s", log_path)
+                    last_error = None
+                if start_at_end and not opened_once:
                     file.seek(0, 2)
+                opened_once = True
+                opened_inode = os.fstat(file.fileno()).st_ino
                 while True:
                     line = file.readline()
                     if line:
                         await process_log_line(line)
                     else:
                         await asyncio.sleep(0.5)
-        except OSError:
+                        try:
+                            file_status = log_path.stat()
+                        except OSError:
+                            break
+                        if (
+                            file_status.st_ino != opened_inode
+                            or file_status.st_size < file.tell()
+                        ):
+                            break
+        except OSError as error:
+            error_message = f"{type(error).__name__}: {error}"
+            if error_message != last_error:
+                logger.warning("Cannot read %s (%s); retrying", log_path, error)
+                last_error = error_message
             await asyncio.sleep(2)
 
 
 async def score_loop() -> None:
+    global next_score_at
     interval = int(SCORING_CONFIG["score_interval_seconds"])
+    next_score_at = time.time() + interval
     while True:
-        await asyncio.sleep(interval)
-        if await scoreboard.apply_score_tick():
+        await asyncio.sleep(max(0, next_score_at - time.time()))
+        changed = await scoreboard.apply_score_tick()
+        next_score_at = time.time() + interval
+        if changed:
             await broadcast_state()
 
 
@@ -160,7 +204,14 @@ async def lifespan(_: FastAPI):
     if mode == "demo":
         tasks.append(asyncio.create_task(demo_log_reader()))
     elif mode == "live":
-        tasks.append(asyncio.create_task(live_log_reader()))
+        logger.info(
+            "Live mode: tailing %s",
+            ", ".join(str(path) for path in live_log_paths()),
+        )
+        tasks.extend(
+            asyncio.create_task(live_log_reader(log_path))
+            for log_path in live_log_paths()
+        )
 
     yield
 
@@ -183,13 +234,13 @@ async def index() -> FileResponse:
 
 @app.get("/api/state")
 async def get_state() -> dict[str, Any]:
-    return await scoreboard.snapshot()
+    return await state_snapshot()
 
 
 @app.post("/api/reset")
 async def reset_state() -> dict[str, Any]:
     await scoreboard.reset()
-    snapshot = await scoreboard.snapshot()
+    snapshot = await state_snapshot()
     await connections.broadcast(snapshot)
     return snapshot
 
@@ -200,7 +251,7 @@ async def post_event(event: ManualEvent) -> dict[str, Any]:
         await scoreboard.apply_event(event.model_dump())
     except ValueError as error:
         raise HTTPException(status_code=400, detail=str(error)) from error
-    snapshot = await scoreboard.snapshot()
+    snapshot = await state_snapshot()
     await connections.broadcast(snapshot)
     return {"ok": True, "state": snapshot}
 
@@ -209,7 +260,7 @@ async def post_event(event: ManualEvent) -> dict[str, Any]:
 async def websocket_endpoint(websocket: WebSocket) -> None:
     await connections.connect(websocket)
     try:
-        await websocket.send_json(await scoreboard.snapshot())
+        await websocket.send_json(await state_snapshot())
         while True:
             # The browser sends a small keepalive; state updates are server-driven.
             await websocket.receive_text()

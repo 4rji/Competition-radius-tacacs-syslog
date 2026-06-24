@@ -17,8 +17,8 @@ let socket;
 let reconnectTimer;
 let pingTimer;
 let countdownTimer;
-let scoreInterval = 60;
-let nextScoreAt = Date.now() + scoreInterval * 1000;
+let scoreInterval = null;
+let nextScoreAt = 0;
 
 function createElement(tag, className, text) {
   const element = document.createElement(tag);
@@ -91,7 +91,10 @@ function renderParticipants(participants) {
     tacacsCell.append(statusPill(participant.services.tacacs?.status));
 
     const greenCell = createElement("td", "centered");
-    greenCell.append(createElement("span", "green-count", `${participant.green_services_count}/3`));
+    const serviceCount = Object.keys(participant.services || {}).length;
+    greenCell.append(
+      createElement("span", "green-count", `${participant.green_services_count}/${serviceCount}`),
+    );
 
     const scoreCell = createElement("td", "score-column");
     scoreCell.append(createElement("span", "score", participant.score.toLocaleString()));
@@ -162,7 +165,9 @@ function renderState(state) {
   elements.participantCount.textContent = summary.participant_count || 0;
 
   scoreInterval = Number(scoring.score_interval_seconds || 60);
-  nextScoreAt = Date.now() + scoreInterval * 1000;
+  nextScoreAt = state.next_score_at
+    ? Number(state.next_score_at) * 1000
+    : Date.now() + scoreInterval * 1000;
   elements.scoringRule.textContent =
     `+${scoring.points_per_service_per_minute || 0} points per green service`;
   elements.lastUpdated.textContent = `Updated ${formatTime(state.updated_at)}`;
@@ -222,6 +227,10 @@ async function loadInitialState() {
 }
 
 function updateCountdown() {
+  if (!scoreInterval) {
+    elements.scoreCountdown.textContent = "—";
+    return;
+  }
   const remaining = Math.max(0, Math.ceil((nextScoreAt - Date.now()) / 1000));
   elements.scoreCountdown.textContent = `${remaining}s`;
   if (remaining === 0) nextScoreAt = Date.now() + scoreInterval * 1000;

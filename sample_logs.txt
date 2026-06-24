@@ -1,16 +1,19 @@
 # Digi Access Scoreboard demo stream
-info user name=admin~service=web~state=opened~remote=192.168.10.11
+2026-06-24T13:41:03-05:00 00409DDE26B5 user name=admin~service=web~state=opened~remote=10.10.61.76
 radiusd: Access-Accept User-Name="admin" NAS-IP-Address=192.168.10.12
 tac_plus: user=admintac client=192.168.10.13 service=shell action=login result=success
 info user name=admin~service=https~state=opened~remote=192.168.10.12
-radiusd: Login OK: [admin] from client 192.168.10.11
-tac_plus: user=admintac client=192.168.10.11 status=success
+2026-06-24 08:41:31 -0500       10.10.65.72     adminradius     ssh     10.10.61.76     start   start_time=1782308491   task_id=4604    service=system  protocol=ssh
+2026-06-24 08:39:57 -0500       10.10.65.72     admintac        ssh     10.10.61.76     start   start_time=1782308397   task_id=26942   service=system  protocol=ssh
 radiusd: Acct-Status-Type = Start User-Name="admin" NAS-IP-Address=192.168.10.13
 info user name=admin~service=webui~state=opened~remote=192.168.10.13
 tac_plus: user=admintac client=192.168.10.12 service=shell action=login result=success
-info user name=admin~service=web~state=closed~remote=192.168.10.11
+2026-06-24T13:41:04-05:00 00409DDE26B5 user name=admin~service=web~state=closed~remote=10.10.61.76
 radiusd: Acct-Status-Type = Stop User-Name="admin" NAS-IP-Address=192.168.10.12
 tac_plus: user=admintac client=192.168.10.13 action=logout
-info user name=admin~service=https~state=opened~remote=192.168.10.11
+2026-06-24 08:41:39 -0500       10.10.65.72     adminradius     ssh     10.10.61.76     stop    stop_time=1782308499    task_id=4604    service=system  protocol=ssh
+2026-06-24 08:40:03 -0500       10.10.65.72     admintac        ssh     10.10.61.76     stop    stop_time=1782308403    task_id=26942   service=system  protocol=ssh
+2026-06-24T13:42:03-05:00 00409DDE26B5 user name=admin~service=https~state=opened~remote=10.10.61.76
 radiusd: Access-Accept User-Name="admin" NAS-IP-Address=192.168.10.12
-tac_plus: user=admintac client=192.168.10.13 status=success
+2026-06-24 08:42:18 -0500       10.10.65.72     adminradius     ssh     10.10.61.76     start   start_time=1782308538   task_id=10141   service=system  protocol=ssh
+2026-06-24 08:42:21 -0500       10.10.65.72     admintac        ssh     10.10.61.76     start   start_time=1782308541   task_id=10142   service=system  protocol=ssh

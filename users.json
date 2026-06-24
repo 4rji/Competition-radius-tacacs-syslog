@@ -2,16 +2,17 @@
   "participants": [
     {
       "name": "Javi",
-      "router_ip": "192.168.10.11",
-      "display_name": "Javi"
+      "router_ip": "10.10.65.72",
+      "display_name": "Poly",
+      "syslog_host": "00409DDE26B5"
     },
     {
-      "name": "Connor",
+      "name": "Michael",
       "router_ip": "192.168.10.12",
       "display_name": "Connor"
     },
     {
-      "name": "Amber",
+      "name": "Peterson",
       "router_ip": "192.168.10.13",
       "display_name": "Amber"
     }

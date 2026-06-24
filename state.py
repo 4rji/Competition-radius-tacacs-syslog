@@ -40,6 +40,7 @@ class ScoreboardState:
         self.persistence_path = persistence_path
         self.recent_events: list[dict[str, Any]] = []
         self.participants: dict[str, dict[str, Any]] = {}
+        self.participant_aliases: dict[str, str] = {}
 
         for participant in users_config["participants"]:
             router_ip = participant["router_ip"]
@@ -53,6 +54,15 @@ class ScoreboardState:
                     for service in self.services
                 },
             }
+            aliases = [
+                router_ip,
+                participant.get("syslog_host"),
+                participant.get("router_id"),
+                *participant.get("aliases", []),
+            ]
+            for alias in aliases:
+                if alias:
+                    self.participant_aliases[str(alias).lower()] = router_ip
 
         self._load_persisted_state()
 
@@ -95,32 +105,40 @@ class ScoreboardState:
             pass
 
     async def apply_event(self, event: dict[str, Any]) -> bool:
-        router_ip = event.get("participant_ip")
+        participant_key = event.get("participant_ip") or event.get("participant_id")
+        router_ip = self.participant_aliases.get(str(participant_key).lower())
         service = str(event.get("service", "")).lower()
         status = str(event.get("status", "")).lower()
 
-        if router_ip not in self.participants:
-            raise ValueError(f"No participant is assigned to router IP {router_ip}")
+        if not router_ip:
+            raise ValueError(
+                f"No participant is assigned to router identifier {participant_key!r}"
+            )
         if service not in self.services:
             raise ValueError(f"Unknown service {service!r}; expected one of {self.services}")
         if status not in {"green", "red"}:
             raise ValueError("status must be 'green' or 'red'")
 
         async with self.lock:
-            timestamp = event.get("timestamp") or isoformat()
+            received_at = isoformat()
+            timestamp = event.get("timestamp") or received_at
             participant = self.participants[router_ip]
             participant["services"][service] = {
                 "status": status,
-                "last_seen": timestamp,
+                # Freshness is based on when this process received the event.
+                # Device clocks may be offset or use a different timezone.
+                "last_seen": received_at,
             }
             normalized = {
                 "timestamp": timestamp,
+                "received_at": received_at,
                 "participant_ip": router_ip,
                 "participant_name": participant["display_name"],
                 "service": service,
                 "status": status,
                 "event_type": event.get("event_type", "manual_event"),
                 "username": event.get("username"),
+                "remote_ip": event.get("remote_ip"),
                 "raw": event.get("raw", ""),
             }
             self.recent_events.append(normalized)
