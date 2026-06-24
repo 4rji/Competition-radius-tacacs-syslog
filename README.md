@@ -51,14 +51,14 @@ Edit `scoring.json`:
   "one_time_points": 10,
   "one_time_services": ["syslog"],
   "service_timeout_seconds": 300,
-  "score_interval_seconds": 60,
+  "score_interval_seconds": 180,
   "services": ["syslog", "radius", "tacacs"]
 }
 ```
 
 The first valid SYSLOG packet gives the participant `one_time_points` once.
 SYSLOG stays green and never times out; additional packets do not add points.
-At every scoring interval, each other active green service awards
+Every three minutes, each other active green service awards
 `points_per_service_per_minute` points. A green service turns red when it has
 not received a refresh event within `service_timeout_seconds`.
 

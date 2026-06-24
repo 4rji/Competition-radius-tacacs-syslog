@@ -13,7 +13,13 @@ const elements = {
   themeIcon: document.querySelector("#theme-icon"),
   themeLabel: document.querySelector("#theme-label"),
   themeColor: document.querySelector("#theme-color"),
+  winnerButton: document.querySelector("#winner-button"),
   resetButton: document.querySelector("#reset-button"),
+  winnerOverlay: document.querySelector("#winner-overlay"),
+  winnerName: document.querySelector("#winner-name"),
+  winnerScore: document.querySelector("#winner-score"),
+  closeWinner: document.querySelector("#close-winner"),
+  fireworksCanvas: document.querySelector("#fireworks-canvas"),
   toast: document.querySelector("#toast"),
 };
 
@@ -25,6 +31,10 @@ let pingTimer;
 let countdownTimer;
 let scoreInterval = null;
 let nextScoreAt = 0;
+let currentParticipants = [];
+let fireworksFrame;
+let fireworksStopTimer;
+let fireworksBurstTimer;
 
 function applyTheme(theme, persist = false) {
   const selectedTheme = theme === "light" ? "light" : "dark";
@@ -183,6 +193,7 @@ function renderState(state) {
   const summary = state.summary || {};
   const scoring = state.scoring || {};
   const participants = state.participants || [];
+  currentParticipants = participants;
 
   elements.leaderName.textContent = summary.leader || "—";
   elements.leaderScore.textContent = `${Number(summary.leader_score || 0).toLocaleString()} points`;
@@ -195,11 +206,19 @@ function renderState(state) {
     ? Number(state.next_score_at) * 1000
     : Date.now() + scoreInterval * 1000;
   elements.scoringRule.textContent =
-    `+${scoring.one_time_points || 10} first SYSLOG · +${scoring.points_per_service_per_minute || 0}/min active`;
+    `+${scoring.one_time_points || 10} first SYSLOG · +${scoring.points_per_service_per_minute || 0} every ${formatInterval(scoreInterval)} active`;
   elements.lastUpdated.textContent = `Updated ${formatTime(state.updated_at)}`;
 
   renderParticipants(participants);
   renderEvents(state.recent_events || []);
+}
+
+function formatInterval(seconds) {
+  if (seconds % 60 === 0) {
+    const minutes = seconds / 60;
+    return `${minutes} min`;
+  }
+  return `${seconds} sec`;
 }
 
 function setConnection(status) {
@@ -258,8 +277,112 @@ function updateCountdown() {
     return;
   }
   const remaining = Math.max(0, Math.ceil((nextScoreAt - Date.now()) / 1000));
-  elements.scoreCountdown.textContent = `${remaining}s`;
+  const minutes = Math.floor(remaining / 60);
+  const seconds = remaining % 60;
+  elements.scoreCountdown.textContent = `${minutes}:${String(seconds).padStart(2, "0")}`;
   if (remaining === 0) nextScoreAt = Date.now() + scoreInterval * 1000;
+}
+
+function launchFireworks() {
+  const canvas = elements.fireworksCanvas;
+  const context = canvas.getContext("2d");
+  const particles = [];
+  const colors = ["#82d653", "#ffd166", "#ff5d8f", "#61dafb", "#ffffff", "#b388ff"];
+  const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+  function resizeCanvas() {
+    const scale = Math.min(window.devicePixelRatio || 1, 2);
+    canvas.width = Math.floor(window.innerWidth * scale);
+    canvas.height = Math.floor(window.innerHeight * scale);
+    canvas.style.width = `${window.innerWidth}px`;
+    canvas.style.height = `${window.innerHeight}px`;
+    context.setTransform(scale, 0, 0, scale, 0, 0);
+  }
+
+  function burst(x, y, amount = 70) {
+    for (let index = 0; index < amount; index += 1) {
+      const angle = Math.random() * Math.PI * 2;
+      const speed = 2.5 + Math.random() * 6;
+      particles.push({
+        x,
+        y,
+        vx: Math.cos(angle) * speed,
+        vy: Math.sin(angle) * speed,
+        alpha: 1,
+        decay: 0.009 + Math.random() * 0.013,
+        color: colors[Math.floor(Math.random() * colors.length)],
+        size: 2 + Math.random() * 3,
+      });
+    }
+  }
+
+  function animate() {
+    context.clearRect(0, 0, window.innerWidth, window.innerHeight);
+    for (let index = particles.length - 1; index >= 0; index -= 1) {
+      const particle = particles[index];
+      particle.x += particle.vx;
+      particle.y += particle.vy;
+      particle.vy += 0.045;
+      particle.vx *= 0.99;
+      particle.alpha -= particle.decay;
+      if (particle.alpha <= 0) {
+        particles.splice(index, 1);
+        continue;
+      }
+      context.globalAlpha = particle.alpha;
+      context.fillStyle = particle.color;
+      context.beginPath();
+      context.arc(particle.x, particle.y, particle.size, 0, Math.PI * 2);
+      context.fill();
+    }
+    context.globalAlpha = 1;
+    fireworksFrame = window.requestAnimationFrame(animate);
+  }
+
+  resizeCanvas();
+  window.addEventListener("resize", resizeCanvas, { once: true });
+  window.cancelAnimationFrame(fireworksFrame);
+  clearTimeout(fireworksStopTimer);
+  clearInterval(fireworksBurstTimer);
+
+  burst(window.innerWidth * 0.2, window.innerHeight * 0.28, reducedMotion ? 25 : 75);
+  burst(window.innerWidth * 0.8, window.innerHeight * 0.3, reducedMotion ? 25 : 75);
+  burst(window.innerWidth * 0.5, window.innerHeight * 0.18, reducedMotion ? 25 : 90);
+  animate();
+
+  if (!reducedMotion) {
+    fireworksBurstTimer = window.setInterval(() => {
+      burst(
+        window.innerWidth * (0.12 + Math.random() * 0.76),
+        window.innerHeight * (0.12 + Math.random() * 0.4),
+        65,
+      );
+    }, 550);
+    fireworksStopTimer = window.setTimeout(() => window.clearInterval(fireworksBurstTimer), 4800);
+  }
+}
+
+function showWinner() {
+  const winner = currentParticipants[0];
+  if (!winner) {
+    showToast("No participants available", true);
+    return;
+  }
+  elements.winnerName.textContent = winner.display_name;
+  elements.winnerScore.textContent = `${Number(winner.score || 0).toLocaleString()} points`;
+  elements.winnerOverlay.hidden = false;
+  document.body.classList.add("celebrating");
+  launchFireworks();
+  elements.closeWinner.focus();
+}
+
+function closeWinner() {
+  elements.winnerOverlay.hidden = true;
+  document.body.classList.remove("celebrating");
+  window.cancelAnimationFrame(fireworksFrame);
+  clearTimeout(fireworksStopTimer);
+  clearInterval(fireworksBurstTimer);
+  elements.winnerButton.focus();
 }
 
 let toastTimer;
@@ -275,6 +398,15 @@ function showToast(message, isError = false) {
 elements.themeToggle.addEventListener("click", () => {
   const currentTheme = document.documentElement.dataset.theme;
   applyTheme(currentTheme === "dark" ? "light" : "dark", true);
+});
+
+elements.winnerButton.addEventListener("click", showWinner);
+elements.closeWinner.addEventListener("click", closeWinner);
+elements.winnerOverlay.addEventListener("click", (event) => {
+  if (event.target === elements.winnerOverlay) closeWinner();
+});
+document.addEventListener("keydown", (event) => {
+  if (event.key === "Escape" && !elements.winnerOverlay.hidden) closeWinner();
 });
 
 elements.resetButton.addEventListener("click", async () => {

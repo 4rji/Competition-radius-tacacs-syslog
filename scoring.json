@@ -3,7 +3,7 @@
   "one_time_points": 10,
   "one_time_services": ["syslog"],
   "service_timeout_seconds": 300,
-  "score_interval_seconds": 60,
+  "score_interval_seconds": 180,
   "services": [
     "syslog",
     "radius",
