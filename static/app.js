@@ -2,6 +2,9 @@ const elements = {
   scoreboardBody: document.querySelector("#scoreboard-body"),
   eventFeed: document.querySelector("#event-feed"),
   connectionStatus: document.querySelector("#connection-status"),
+  modeEyebrow: document.querySelector("#mode-eyebrow"),
+  eventFeedTitle: document.querySelector("#event-feed-title"),
+  streamMode: document.querySelector("#stream-mode"),
   leaderName: document.querySelector("#leader-name"),
   leaderScore: document.querySelector("#leader-score"),
   activeServices: document.querySelector("#active-services"),
@@ -42,6 +45,7 @@ let drawCycleTimer;
 let drawFinishTimer;
 let winnerDrawActive = false;
 let qualifyingScore = 30;
+let runtimeMode = "live";
 
 function applyTheme(theme, persist = false) {
   const selectedTheme = theme === "light" ? "light" : "dark";
@@ -235,6 +239,8 @@ function renderState(state) {
     + Math.max(0, serviceCount - 1)
       * Number(scoring.points_per_service_first_login || 10);
   const eligibleParticipants = getEligibleParticipants();
+  runtimeMode = state.mode === "demo" ? "demo" : state.mode === "off" ? "off" : "live";
+  renderRuntimeMode();
 
   elements.leaderName.textContent = summary.leader || "—";
   elements.leaderScore.textContent = `${Number(summary.leader_score || 0).toLocaleString()} points`;
@@ -261,9 +267,25 @@ function renderState(state) {
 function setConnection(status) {
   const text = elements.connectionStatus.querySelector("span:last-child");
   elements.connectionStatus.className = `connection-badge connection-${status}`;
-  if (status === "live") text.textContent = "Live";
+  if (status === "live") text.textContent = runtimeMode === "demo" ? "Demo" : "Live";
   else if (status === "offline") text.textContent = "Reconnecting";
   else text.textContent = "Connecting";
+}
+
+function renderRuntimeMode() {
+  const isDemo = runtimeMode === "demo";
+  const isOff = runtimeMode === "off";
+  const modeLabel = isDemo ? "DEMO" : isOff ? "OFF" : "LIVE";
+
+  elements.modeEyebrow.textContent = `${modeLabel} CLASSROOM CHALLENGE`;
+  elements.eventFeedTitle.textContent = isDemo ? "Demo event feed" : "Live event feed";
+  elements.streamMode.querySelector("b").textContent = modeLabel;
+  elements.streamMode.classList.toggle("demo-label", isDemo);
+  elements.streamMode.classList.toggle("off-label", isOff);
+
+  if (socket?.readyState === WebSocket.OPEN) {
+    setConnection("live");
+  }
 }
 
 function connectWebSocket() {
@@ -425,32 +447,14 @@ function showWinner() {
     showToast(`No participants have reached ${qualifyingScore} points`, true);
     return;
   }
-  if (candidates.length === 1) {
-    showToast(
-      `Only ${candidates[0].display_name} has ${qualifyingScore} points. Wait for another finalist.`,
-      true,
-    );
-    return;
-  }
-
   clearTimeout(drawCycleTimer);
   clearTimeout(drawFinishTimer);
-  winnerDrawActive = true;
   elements.winnerButton.disabled = true;
-  elements.closeWinner.disabled = true;
-  elements.winnerOverlay.querySelector(".winner-announcement").classList.add("is-drawing");
-  elements.winnerOverlay.querySelector(".winner-announcement").classList.remove("is-revealed");
-  elements.winnerKicker.textContent = "🎲 DRAWING WINNER 🎲";
-  elements.winnerScore.hidden = false;
-  elements.winnerScore.textContent =
-    `${candidates.length} finalist${candidates.length === 1 ? "" : "s"}`;
   elements.winnerOverlay.hidden = false;
   document.body.classList.add("celebrating");
 
   const winner = candidates[randomIndex(candidates.length)];
-  const reelCandidates = shuffledParticipants(candidates);
-  const totalSteps = 32 + randomIndex(8);
-  let step = 0;
+  const announcement = elements.winnerOverlay.querySelector(".winner-announcement");
 
   function showReelName(name) {
     elements.winnerName.classList.remove("is-rolling");
@@ -464,7 +468,6 @@ function showWinner() {
     elements.winnerKicker.textContent = "🏆 WINNER 🏆";
     elements.winnerScore.textContent = "";
     elements.winnerScore.hidden = true;
-    const announcement = elements.winnerOverlay.querySelector(".winner-announcement");
     announcement.classList.remove("is-drawing");
     announcement.classList.add("is-revealed");
     winnerDrawActive = false;
@@ -473,6 +476,25 @@ function showWinner() {
     launchFireworks();
     elements.closeWinner.focus();
   }
+
+  if (candidates.length === 1) {
+    winnerDrawActive = false;
+    elements.closeWinner.disabled = false;
+    finishDraw();
+    return;
+  }
+
+  winnerDrawActive = true;
+  elements.closeWinner.disabled = true;
+  announcement.classList.add("is-drawing");
+  announcement.classList.remove("is-revealed");
+  elements.winnerKicker.textContent = "🎲 DRAWING WINNER 🎲";
+  elements.winnerScore.hidden = false;
+  elements.winnerScore.textContent = `${candidates.length} finalists`;
+
+  const reelCandidates = shuffledParticipants(candidates);
+  const totalSteps = 32 + randomIndex(8);
+  let step = 0;
 
   function spinReel() {
     if (step >= totalSteps) {

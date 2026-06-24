@@ -953,6 +953,28 @@ tr:first-child .rank-badge {
   animation: pulse-red 1.8s infinite;
 }
 
+.live-label b {
+  font: inherit;
+}
+
+.live-label.demo-label {
+  color: var(--digi-green-dark);
+}
+
+.live-label.demo-label span {
+  background: var(--digi-green);
+  animation-name: pulse;
+}
+
+.live-label.off-label {
+  color: var(--muted);
+}
+
+.live-label.off-label span {
+  background: var(--muted);
+  animation: none;
+}
+
 .event-feed {
   height: min(646px, calc(100vh - 360px));
   min-height: 420px;

@@ -22,6 +22,7 @@ from state import ScoreboardState
 
 BASE_DIR = Path(__file__).resolve().parent
 logger = logging.getLogger("uvicorn.error")
+LOG_MODE = os.environ.get("LOG_MODE", "demo").lower()
 
 
 def load_json(path: Path) -> dict[str, Any]:
@@ -81,7 +82,9 @@ unknown_participant_identifiers: set[str] = set()
 
 
 async def state_snapshot() -> dict[str, Any]:
-    return await scoreboard.snapshot()
+    snapshot = await scoreboard.snapshot()
+    snapshot["mode"] = LOG_MODE
+    return snapshot
 
 
 async def broadcast_state() -> None:
@@ -187,10 +190,9 @@ async def live_log_reader(log_path: Path) -> None:
 @asynccontextmanager
 async def lifespan(_: FastAPI):
     tasks = []
-    mode = os.environ.get("LOG_MODE", "demo").lower()
-    if mode == "demo":
+    if LOG_MODE == "demo":
         tasks.append(asyncio.create_task(demo_log_reader()))
-    elif mode == "live":
+    elif LOG_MODE == "live":
         logger.info(
             "Live mode: tailing %s",
             ", ".join(str(path) for path in live_log_paths()),

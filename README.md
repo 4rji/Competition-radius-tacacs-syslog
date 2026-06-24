@@ -64,8 +64,8 @@ was completed. Later logins do not award duplicate points.
 Participants who complete all three services and reach 30 points are listed in
 the Scoring card. The Winner button cycles through every qualified participant
 with a raffle-style reel and randomly selects one winner. The final view shows
-only the winner's name. At least two qualified participants are required to
-start a draw.
+only the winner's name. If only one participant is qualified, that participant
+is shown immediately as the winner.
 
 Restart the application after changing scoring settings.
 
