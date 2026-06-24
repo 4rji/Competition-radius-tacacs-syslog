@@ -23,6 +23,12 @@ SYSLOG_PACKET_PATTERN = re.compile(
     rf"{IP_PATTERN}\.514:\s+SYSLOG\s+local0\.(?:notice|warning)\b",
     re.IGNORECASE,
 )
+DIGI_SYSLOG_PATTERN = re.compile(
+    r"(?P<timestamp>\d{4}-\d{2}-\d{2}T"
+    r"\d{2}:\d{2}:\d{2}(?:\.\d+)?(?:Z|[+-]\d{2}:\d{2}))\s+"
+    r"(?P<host>[0-9A-F]{12})\s+",
+    re.IGNORECASE,
+)
 
 
 def _search(pattern: str, line: str, flags: int = re.IGNORECASE) -> str | None:
@@ -72,18 +78,30 @@ def _normalize_timestamp(value: str, format_string: str | None = None) -> str | 
 
 
 def parse_syslog(line: str) -> dict[str, Any] | None:
-    """Detect a router sending local0 notice/warning SYSLOG traffic to UDP/514."""
-    match = SYSLOG_PACKET_PATTERN.search(line)
-    if not match:
-        return None
+    """Detect either a stored Digi syslog line or captured SYSLOG UDP traffic."""
+    digi_match = DIGI_SYSLOG_PATTERN.search(line)
+    if digi_match:
+        return _event(
+            line=line,
+            participant_ip=None,
+            participant_id=digi_match.group("host"),
+            service="syslog",
+            status="green",
+            event_type="syslog_received",
+            timestamp=_normalize_timestamp(digi_match.group("timestamp")),
+        )
 
-    return _event(
-        line=line,
-        participant_ip=match.group("source_ip"),
-        service="syslog",
-        status="green",
-        event_type="syslog_received",
-    )
+    packet_match = SYSLOG_PACKET_PATTERN.search(line)
+    if packet_match:
+        return _event(
+            line=line,
+            participant_ip=packet_match.group("source_ip"),
+            service="syslog",
+            status="green",
+            event_type="syslog_received",
+        )
+
+    return None
 
 
 def parse_aaa_accounting(line: str) -> dict[str, Any] | None:

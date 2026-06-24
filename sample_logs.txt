@@ -2,11 +2,11 @@
 10:55:08.117927 enp0s3 In IP 10.10.65.72.47973 > 10.10.65.214.514: SYSLOG local0.notice, length: 92
 radiusd: Access-Accept User-Name="admin" NAS-IP-Address=192.168.10.12
 tac_plus: user=admintac client=192.168.10.13 service=shell action=login result=success
-10:54:48.331331 enp0s3 In IP 192.168.10.12.54970 > 10.10.65.214.514: SYSLOG local0.warning, length: 112
+2026-06-24T16:13:19-05:00 0027044166EF user User admin successfully opened web session from IP 10.10.61.76 via port 443 (ID 16fae16aae)
 2026-06-24 08:41:31 -0500       10.10.65.72     adminradius     ssh     10.10.61.76     start   start_time=1782308491   task_id=4604    service=system  protocol=ssh
 2026-06-24 08:39:57 -0500       10.10.65.72     admintac        ssh     10.10.61.76     start   start_time=1782308397   task_id=26942   service=system  protocol=ssh
 radiusd: Acct-Status-Type = Start User-Name="admin" NAS-IP-Address=192.168.10.13
-10:54:48.333385 enp0s3 In IP 192.168.10.13.54970 > 10.10.65.214.514: SYSLOG local0.warning, length: 99
+2026-06-24T16:14:07-05:00 0027043fe607 user User admin successfully opened web session from IP 10.10.61.76 via port 443 (ID 16fae16aae)
 tac_plus: user=admintac client=192.168.10.12 service=shell action=login result=success
 radiusd: Acct-Status-Type = Stop User-Name="admin" NAS-IP-Address=192.168.10.12
 tac_plus: user=admintac client=192.168.10.13 action=logout

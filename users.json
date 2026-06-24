@@ -7,11 +7,13 @@
     },
     {
       "name": "Michael",
-      "router_ip": "192.168.10.12"
+      "router_ip": "192.168.10.12",
+      "syslog_host": "0027044166EF"
     },
     {
       "name": "Peterson",
-      "router_ip": "192.168.10.13"
+      "router_ip": "192.168.10.13",
+      "syslog_host": "0027043fe607"
     }
   ]
 }

@@ -34,8 +34,10 @@ Edit `users.json`. Each router IP must be unique:
 ```
 
 `router_ip` is the router source IP found in SYSLOG packet captures and the NAS
-IP found in TACACS+ accounting. The dashboard displays the value from `name`;
-there is no separate display-name field to maintain.
+IP found in TACACS+ accounting. `syslog_host` is the 12-character Digi
+identifier found immediately after the timestamp in stored syslog lines. The
+dashboard displays the value from `name`; there is no separate display-name
+field to maintain.
 
 Restart the application after changing this file.
 
@@ -93,11 +95,22 @@ Live mode follows these two files simultaneously by default:
 LOG_MODE=live python app.py
 ```
 
-- `/var/log/syslog` for captured `SYSLOG local0.notice` or
-  `SYSLOG local0.warning` packets sent to UDP/514
+- `/var/log/syslog` for stored Digi messages identified by timestamp and
+  12-character Digi hostname
 - `/var/log/tac_plus_acct.log` for TACACS+ and RADIUS SSH accounting
 
-The SYSLOG parser uses the source IP before the source port:
+The SYSLOG parser accepts stored Digi lines:
+
+```text
+2026-06-24T16:13:19-05:00 0027044166EF user User admin POST page login from IP 10.10.61.76 via port 443
+```
+
+The `10.10.61.76` address is the browser/client and is not used to identify the
+participant. The participant is matched using `0027044166EF` and its
+`syslog_host` entry in `users.json`.
+
+Captured UDP/514 lines are also supported and use the source IP before the
+source port:
 
 ```text
 10:55:08.117927 enp0s3 In IP 10.10.65.72.47973 > 10.10.65.214.514: SYSLOG local0.notice, length: 92
