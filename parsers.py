@@ -27,14 +27,14 @@ ISO_SYSLOG_PATTERN = re.compile(
     r"(?:<\d+>\d?\s*)?"
     r"(?P<timestamp>\d{4}-\d{2}-\d{2}T"
     r"\d{2}:\d{2}:\d{2}(?:\.\d+)?(?:Z|[+-]\d{2}:\d{2})?)\s+"
-    rf"(?P<host>{IP_PATTERN}|[0-9A-Z][0-9A-Z_.:-]*)\s+",
+    rf"(?P<host>{IP_PATTERN}|[0-9A-F]{{12}})\s+",
     re.IGNORECASE,
 )
 BSD_SYSLOG_PATTERN = re.compile(
     r"^\s*(?:<\d+>)?"
     r"(?:Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)\s+"
     r"\d{1,2}\s+\d{2}:\d{2}:\d{2}\s+"
-    rf"(?P<host>{IP_PATTERN}|[0-9A-Z][0-9A-Z_.:-]*)\s+",
+    rf"(?P<host>{IP_PATTERN}|[0-9A-F]{{12}})\s+",
     re.IGNORECASE,
 )
 DIGI_WEB_SESSION_PATTERN = re.compile(

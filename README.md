@@ -39,6 +39,33 @@ identifier found immediately after the timestamp in stored syslog lines. The
 dashboard displays the value from `name`; there is no separate display-name
 field to maintain.
 
+`router_ip` may also be a CIDR subnet when every address in that subnet belongs
+to the same participant:
+
+```json
+{
+  "name": "Remote lab",
+  "router_ip": "10.20.30.0/24"
+}
+```
+
+To keep a primary router IP while accepting events from additional networks,
+use `subnet` or `subnets`:
+
+```json
+{
+  "name": "Javi",
+  "router_ip": "10.10.65.72",
+  "syslog_host": "00409DDE26B5",
+  "subnets": ["172.20.4.0/24", "192.168.50.0/24"]
+}
+```
+
+Exact IP and hostname matches take priority over subnet matches. More-specific
+subnets take priority over broader subnets. Do not assign the same subnet to
+multiple participants: a source IP cannot identify which participant sent an
+event when they share the same range.
+
 Restart the application after changing this file.
 
 ## Configure scoring
@@ -114,6 +141,11 @@ The `10.10.61.76` address is the browser/client and is not used to identify the
 participant. The participant is matched using `0027044166EF` and its
 `syslog_host` entry in `users.json`.
 
+Any valid stored message from a configured Digi hostname proves SYSLOG
+delivery and awards the one-time SYSLOG points. The message does not need to
+represent a successful login; authentication failures are independent of
+whether SYSLOG delivery is working.
+
 Captured UDP/514 lines are also supported and use the source IP before the
 source port:
 
@@ -123,6 +155,27 @@ source port:
 
 In this example, `10.10.65.72` receives 10 points the first time the line is
 detected. It is not marked disconnected later.
+
+For participant identification by source IP, a `tcpdump` capture is the
+recommended SYSLOG source. It observes the sender before rsyslog/syslog-ng
+rewrites the message or replaces the source IP with a Digi hostname:
+
+```bash
+sudo tcpdump -l -n -i enp0s3 'udp dst port 514' \
+  > /tmp/digi-scoreboard-syslog.log
+```
+
+Run the scoreboard against that capture and the TACACS+ accounting log:
+
+```bash
+LOG_MODE=live \
+LIVE_LOG_FILES=/tmp/digi-scoreboard-syslog.log,/var/log/tac_plus_acct.log \
+python app.py
+```
+
+Use the interface that receives the packets instead of `enp0s3` when
+different. The `-n` option is important because it preserves numeric source
+IPs. Every source IP must match a participant's `router_ip`, alias, or subnet.
 
 In `tac_plus_acct.log`, `admintac` is classified as TACACS+ and
 `adminradius` is classified as RADIUS. `start` turns the service green and

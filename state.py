@@ -6,6 +6,7 @@ import asyncio
 import json
 from copy import deepcopy
 from datetime import datetime, timezone
+from ipaddress import ip_address, ip_network
 from pathlib import Path
 from typing import Any
 
@@ -37,9 +38,13 @@ class ScoreboardState:
         self.recent_events: list[dict[str, Any]] = []
         self.participants: dict[str, dict[str, Any]] = {}
         self.participant_aliases: dict[str, str] = {}
+        self.participant_networks: list[tuple[Any, str]] = []
+        configured_networks: dict[Any, str] = {}
 
         for participant in users_config["participants"]:
-            router_ip = participant["router_ip"]
+            router_ip = str(participant["router_ip"])
+            if router_ip in self.participants:
+                raise ValueError(f"Duplicate router_ip {router_ip!r} in users.json")
             self.participants[router_ip] = {
                 "name": participant["name"],
                 "display_name": participant.get("display_name") or participant["name"],
@@ -66,7 +71,56 @@ class ScoreboardState:
                 if alias:
                     self.participant_aliases[str(alias).lower()] = router_ip
 
+            additional_subnets = participant.get("subnets", [])
+            if isinstance(additional_subnets, str):
+                additional_subnets = [additional_subnets]
+            network_values = [
+                *([router_ip] if "/" in router_ip else []),
+                *([participant["subnet"]] if participant.get("subnet") else []),
+                *additional_subnets,
+            ]
+            for value in network_values:
+                try:
+                    network = ip_network(str(value), strict=False)
+                except ValueError as error:
+                    raise ValueError(
+                        f"Invalid subnet {value!r} configured for {participant['name']!r}"
+                    ) from error
+
+                existing_router = configured_networks.get(network)
+                if existing_router and existing_router != router_ip:
+                    raise ValueError(
+                        f"Subnet {network} is assigned to both "
+                        f"{existing_router!r} and {router_ip!r}"
+                    )
+                configured_networks[network] = router_ip
+                self.participant_networks.append((network, router_ip))
+
+        self.participant_networks.sort(
+            key=lambda item: item[0].prefixlen,
+            reverse=True,
+        )
+
         self._load_persisted_state()
+
+    def _resolve_participant(self, participant_key: Any) -> str | None:
+        if participant_key is None:
+            return None
+
+        value = str(participant_key).strip()
+        exact_match = self.participant_aliases.get(value.lower())
+        if exact_match:
+            return exact_match
+
+        try:
+            address = ip_address(value)
+        except ValueError:
+            return None
+
+        for network, router_ip in self.participant_networks:
+            if address.version == network.version and address in network:
+                return router_ip
+        return None
 
     def _load_persisted_state(self) -> None:
         if not self.persistence_path or not self.persistence_path.exists():
@@ -118,7 +172,7 @@ class ScoreboardState:
 
     async def apply_event(self, event: dict[str, Any]) -> bool:
         participant_key = event.get("participant_ip") or event.get("participant_id")
-        router_ip = self.participant_aliases.get(str(participant_key).lower())
+        router_ip = self._resolve_participant(participant_key)
         service = str(event.get("service", "")).lower()
         status = str(event.get("status", "")).lower()
 

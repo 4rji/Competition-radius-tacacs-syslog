@@ -109,7 +109,20 @@ async def process_log_line(line: str) -> None:
                 and len(unknown_participant_identifiers) < 100
             ):
                 unknown_participant_identifiers.add(identifier)
-                logger.warning("Ignoring log event: %s", error)
+                if event.get("participant_ip"):
+                    logger.warning(
+                        "Ignoring source IP %s; add it as router_ip, alias, or subnet "
+                        "in users.json",
+                        identifier,
+                    )
+                elif event.get("participant_id"):
+                    logger.warning(
+                        "Ignoring Digi hostname %s; assign it as syslog_host or alias "
+                        "in users.json",
+                        identifier,
+                    )
+                else:
+                    logger.warning("Ignoring log event: %s", error)
             continue
     if changed:
         await broadcast_state()
