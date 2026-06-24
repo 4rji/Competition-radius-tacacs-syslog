@@ -1,0 +1,115 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="theme-color" content="#111827">
+    <title>Digi Access Scoreboard</title>
+    <link rel="stylesheet" href="/static/style.css">
+    <script src="/static/app.js" defer></script>
+  </head>
+  <body>
+    <div class="page-shell">
+      <header class="topbar">
+        <div class="brand-block">
+          <img class="brand-icon" src="/img/digiicono.png" alt="Digi Tech Support">
+          <div>
+            <p class="eyebrow">LIVE CLASSROOM CHALLENGE</p>
+            <h1>Digi Access Scoreboard</h1>
+            <p class="subtitle">WebUI · RADIUS · TACACS+</p>
+          </div>
+        </div>
+        <div class="header-actions">
+          <div id="connection-status" class="connection-badge connection-pending">
+            <span class="pulse-dot"></span>
+            <span>Connecting</span>
+          </div>
+          <button id="reset-button" class="reset-button" type="button">Reset board</button>
+        </div>
+      </header>
+
+      <main>
+        <section class="summary-grid" aria-label="Scoreboard summary">
+          <article class="summary-card summary-card-accent">
+            <p class="summary-label">Leader</p>
+            <p id="leader-name" class="summary-value">—</p>
+            <p id="leader-score" class="summary-detail">0 points</p>
+          </article>
+          <article class="summary-card">
+            <p class="summary-label">Active services</p>
+            <p id="active-services" class="summary-value">0 / 0</p>
+            <p class="summary-detail">Green right now</p>
+          </article>
+          <article class="summary-card">
+            <p class="summary-label">Participants</p>
+            <p id="participant-count" class="summary-value">0</p>
+            <p class="summary-detail">Configured routers</p>
+          </article>
+          <article class="summary-card">
+            <p class="summary-label">Next scoring</p>
+            <p id="score-countdown" class="summary-value">—</p>
+            <p id="scoring-rule" class="summary-detail">Per active service</p>
+          </article>
+        </section>
+
+        <div class="dashboard-grid">
+          <section class="panel scoreboard-panel">
+            <div class="panel-heading">
+              <div>
+                <p class="section-kicker">CURRENT STANDINGS</p>
+                <h2>Leaderboard</h2>
+              </div>
+              <p id="last-updated" class="last-updated">Waiting for data…</p>
+            </div>
+
+            <div class="table-scroll">
+              <table>
+                <thead>
+                  <tr>
+                    <th class="rank-column">Rank</th>
+                    <th>Participant</th>
+                    <th>Router IP</th>
+                    <th>WebUI</th>
+                    <th>RADIUS</th>
+                    <th>TACACS</th>
+                    <th class="centered">Green</th>
+                    <th class="score-column">Score</th>
+                    <th>Last seen</th>
+                  </tr>
+                </thead>
+                <tbody id="scoreboard-body">
+                  <tr>
+                    <td colspan="9" class="empty-state">Loading scoreboard…</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </section>
+
+          <aside class="panel feed-panel">
+            <div class="panel-heading feed-heading">
+              <div>
+                <p class="section-kicker">SYSLOG STREAM</p>
+                <h2>Live event feed</h2>
+              </div>
+              <span class="live-label"><span></span>LIVE</span>
+            </div>
+            <div id="event-feed" class="event-feed" aria-live="polite">
+              <div class="feed-empty">
+                <span class="feed-empty-icon">↯</span>
+                <p>Waiting for authentication events</p>
+              </div>
+            </div>
+          </aside>
+        </div>
+      </main>
+
+      <footer>
+        <img src="/img/digitechsupport.png" alt="Digi TechSupport">
+        <p>Real-time access validation for live demos</p>
+      </footer>
+    </div>
+
+    <div id="toast" class="toast" role="status" aria-live="polite"></div>
+  </body>
+</html>

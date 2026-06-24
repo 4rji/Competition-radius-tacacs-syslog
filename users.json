@@ -1,0 +1,19 @@
+{
+  "participants": [
+    {
+      "name": "Javi",
+      "router_ip": "192.168.10.11",
+      "display_name": "Javi"
+    },
+    {
+      "name": "Connor",
+      "router_ip": "192.168.10.12",
+      "display_name": "Connor"
+    },
+    {
+      "name": "Amber",
+      "router_ip": "192.168.10.13",
+      "display_name": "Amber"
+    }
+  ]
+}

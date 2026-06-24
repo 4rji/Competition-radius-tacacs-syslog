@@ -1,0 +1,16 @@
+# Digi Access Scoreboard demo stream
+info user name=admin~service=web~state=opened~remote=192.168.10.11
+radiusd: Access-Accept User-Name="admin" NAS-IP-Address=192.168.10.12
+tac_plus: user=admintac client=192.168.10.13 service=shell action=login result=success
+info user name=admin~service=https~state=opened~remote=192.168.10.12
+radiusd: Login OK: [admin] from client 192.168.10.11
+tac_plus: user=admintac client=192.168.10.11 status=success
+radiusd: Acct-Status-Type = Start User-Name="admin" NAS-IP-Address=192.168.10.13
+info user name=admin~service=webui~state=opened~remote=192.168.10.13
+tac_plus: user=admintac client=192.168.10.12 service=shell action=login result=success
+info user name=admin~service=web~state=closed~remote=192.168.10.11
+radiusd: Acct-Status-Type = Stop User-Name="admin" NAS-IP-Address=192.168.10.12
+tac_plus: user=admintac client=192.168.10.13 action=logout
+info user name=admin~service=https~state=opened~remote=192.168.10.11
+radiusd: Access-Accept User-Name="admin" NAS-IP-Address=192.168.10.12
+tac_plus: user=admintac client=192.168.10.13 status=success

@@ -1,0 +1,10 @@
+{
+  "points_per_service_per_minute": 10,
+  "service_timeout_seconds": 300,
+  "score_interval_seconds": 60,
+  "services": [
+    "webui",
+    "radius",
+    "tacacs"
+  ]
+}
