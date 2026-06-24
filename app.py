@@ -96,11 +96,12 @@ async def process_log_line(line: str) -> None:
     if not event:
         return
     try:
-        await scoreboard.apply_event(event)
+        changed = await scoreboard.apply_event(event)
     except ValueError:
         # Ignore valid-looking events from router IPs not assigned in users.json.
         return
-    await broadcast_state()
+    if changed:
+        await broadcast_state()
 
 
 async def demo_log_reader() -> None:

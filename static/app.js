@@ -109,8 +109,8 @@ function renderParticipants(participants) {
 
     const ipCell = createElement("td", "router-ip", participant.router_ip);
 
-    const webuiCell = createElement("td");
-    webuiCell.append(statusPill(participant.services.webui?.status));
+    const syslogCell = createElement("td");
+    syslogCell.append(statusPill(participant.services.syslog?.status));
     const radiusCell = createElement("td");
     radiusCell.append(statusPill(participant.services.radius?.status));
     const tacacsCell = createElement("td");
@@ -132,7 +132,7 @@ function renderParticipants(participants) {
       rankCell,
       participantCell,
       ipCell,
-      webuiCell,
+      syslogCell,
       radiusCell,
       tacacsCell,
       greenCell,
@@ -195,7 +195,7 @@ function renderState(state) {
     ? Number(state.next_score_at) * 1000
     : Date.now() + scoreInterval * 1000;
   elements.scoringRule.textContent =
-    `+${scoring.points_per_service_per_minute || 0} points per green service`;
+    `+${scoring.one_time_points || 10} first SYSLOG · +${scoring.points_per_service_per_minute || 0}/min active`;
   elements.lastUpdated.textContent = `Updated ${formatTime(state.updated_at)}`;
 
   renderParticipants(participants);

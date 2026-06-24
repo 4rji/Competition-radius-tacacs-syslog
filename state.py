@@ -37,6 +37,8 @@ class ScoreboardState:
         self.lock = asyncio.Lock()
         self.scoring = scoring_config
         self.services = list(scoring_config["services"])
+        self.one_time_services = set(scoring_config.get("one_time_services", []))
+        self.one_time_points = int(scoring_config.get("one_time_points", 10))
         self.persistence_path = persistence_path
         self.recent_events: list[dict[str, Any]] = []
         self.participants: dict[str, dict[str, Any]] = {}
@@ -123,12 +125,21 @@ class ScoreboardState:
             received_at = isoformat()
             timestamp = event.get("timestamp") or received_at
             participant = self.participants[router_ip]
+            current_service = participant["services"][service]
+            if (
+                service in self.one_time_services
+                and current_service["status"] == "green"
+            ):
+                return False
+
             participant["services"][service] = {
                 "status": status,
                 # Freshness is based on when this process received the event.
                 # Device clocks may be offset or use a different timezone.
                 "last_seen": received_at,
             }
+            if service in self.one_time_services and status == "green":
+                participant["score"] += self.one_time_points
             normalized = {
                 "timestamp": timestamp,
                 "received_at": received_at,
@@ -154,6 +165,7 @@ class ScoreboardState:
                 green_count = sum(
                     1
                     for service in self.services
+                    if service not in self.one_time_services
                     if participant["services"][service]["status"] == "green"
                 )
                 if green_count:
@@ -171,6 +183,8 @@ class ScoreboardState:
         async with self.lock:
             for participant in self.participants.values():
                 for service in self.services:
+                    if service in self.one_time_services:
+                        continue
                     service_state = participant["services"][service]
                     if service_state["status"] != "green":
                         continue

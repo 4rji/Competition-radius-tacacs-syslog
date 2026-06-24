@@ -1,9 +1,11 @@
 {
   "points_per_service_per_minute": 10,
+  "one_time_points": 10,
+  "one_time_services": ["syslog"],
   "service_timeout_seconds": 300,
   "score_interval_seconds": 60,
   "services": [
-    "webui",
+    "syslog",
     "radius",
     "tacacs"
   ]

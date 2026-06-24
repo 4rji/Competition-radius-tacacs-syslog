@@ -1,4 +1,4 @@
-"""Small, modular parsers for Digi, RADIUS, and TACACS+ log lines."""
+"""Small, modular parsers for SYSLOG, RADIUS, and TACACS+ log lines."""
 
 from __future__ import annotations
 
@@ -8,11 +8,6 @@ from typing import Any
 
 
 IP_PATTERN = r"(?:\d{1,3}\.){3}\d{1,3}"
-ISO_SYSLOG_PREFIX = (
-    rf"^\s*(?P<timestamp>\d{{4}}-\d{{2}}-\d{{2}}T"
-    rf"\d{{2}}:\d{{2}}:\d{{2}}(?:Z|[+-]\d{{2}}:\d{{2}}))\s+"
-    rf"(?P<host>\S+)\s+"
-)
 AAA_ACCOUNTING_PATTERN = re.compile(
     rf"^\s*(?P<timestamp>\d{{4}}-\d{{2}}-\d{{2}}\s+"
     rf"\d{{2}}:\d{{2}}:\d{{2}}\s+[+-]\d{{4}})\s+"
@@ -21,6 +16,11 @@ AAA_ACCOUNTING_PATTERN = re.compile(
     rf"(?P<port>\S+)\s+"
     rf"(?P<remote_ip>{IP_PATTERN})\s+"
     rf"(?P<action>start|stop)\b",
+    re.IGNORECASE,
+)
+SYSLOG_PACKET_PATTERN = re.compile(
+    rf"\bIP\s+(?P<source_ip>{IP_PATTERN})\.\d+\s*>\s*"
+    rf"{IP_PATTERN}\.514:\s+SYSLOG\s+local0\.(?:notice|warning)\b",
     re.IGNORECASE,
 )
 
@@ -71,41 +71,18 @@ def _normalize_timestamp(value: str, format_string: str | None = None) -> str | 
     return parsed.isoformat()
 
 
-def _syslog_source(line: str) -> tuple[str | None, str | None]:
-    match = re.search(ISO_SYSLOG_PREFIX, line)
+def parse_syslog(line: str) -> dict[str, Any] | None:
+    """Detect a router sending local0 notice/warning SYSLOG traffic to UDP/514."""
+    match = SYSLOG_PACKET_PATTERN.search(line)
     if not match:
-        return None, None
-    timestamp = _normalize_timestamp(match.group("timestamp"))
-    return match.group("host"), timestamp
-
-
-def parse_digi_webui(line: str) -> dict[str, Any] | None:
-    """Parse Digi WebUI opened/closed session messages."""
-    service = _search(r"\bservice=(web|https|webui)\b", line)
-    state = _search(r"\bstate=(opened|closed)\b", line)
-    remote_ip = _search(rf"\bremote=({IP_PATTERN})\b", line)
-
-    if not (service and state and remote_ip):
         return None
 
-    source_host, timestamp = _syslog_source(line)
-    source_is_ip = bool(source_host and re.fullmatch(IP_PATTERN, source_host))
-    # Real Digi syslog uses the router hostname/MAC before "user". The remote
-    # field is the client workstation. Legacy demo lines without a syslog
-    # prefix continue to treat remote as the participant IP.
-    participant_ip = source_host if source_is_ip else (remote_ip if not source_host else None)
-    username = _search(r"\bname=([^~\s]+)", line)
-    is_open = state.lower() == "opened"
     return _event(
         line=line,
-        participant_ip=participant_ip,
-        service="webui",
-        status="green" if is_open else "red",
-        event_type="login_success" if is_open else "logout",
-        username=username,
-        participant_id=source_host,
-        remote_ip=remote_ip,
-        timestamp=timestamp,
+        participant_ip=match.group("source_ip"),
+        service="syslog",
+        status="green",
+        event_type="syslog_received",
     )
 
 
@@ -194,7 +171,7 @@ def parse_log_line(line: str) -> dict[str, Any] | None:
     if not line or not line.strip() or line.lstrip().startswith("#"):
         return None
 
-    for parser in (parse_digi_webui, parse_aaa_accounting, parse_radius, parse_tacacs):
+    for parser in (parse_syslog, parse_aaa_accounting, parse_radius, parse_tacacs):
         event = parser(line)
         if event:
             return event

@@ -1,7 +1,7 @@
 # Digi Access Scoreboard
 
-A small FastAPI application for live classroom demos. It reads Digi WebUI,
-RADIUS, and TACACS+ authentication logs, maps router IPs to participants, and
+A small FastAPI application for live classroom demos. It detects SYSLOG,
+RADIUS, and TACACS+ traffic, maps router IPs to participants, and
 pushes scoreboard updates to the browser over WebSocket.
 
 ## Requirements
@@ -27,19 +27,15 @@ Edit `users.json`. Each router IP must be unique:
   "participants": [
     {
       "name": "Javi",
-      "router_ip": "10.10.65.72",
-      "syslog_host": "00409DDE26B5"
+      "router_ip": "10.10.65.72"
     }
   ]
 }
 ```
 
-`router_ip` is the NAS/router IP found in TACACS+ accounting. `syslog_host`
-is the Digi hostname or MAC found immediately after the timestamp in syslog.
-It is required when the WebUI syslog message does not contain the router IP.
-The `remote=` value is the client workstation and must not be used as the
-participant router IP. The dashboard displays the value from `name`; there is
-no separate display-name field to maintain.
+`router_ip` is the router source IP found in SYSLOG packet captures and the NAS
+IP found in TACACS+ accounting. The dashboard displays the value from `name`;
+there is no separate display-name field to maintain.
 
 Restart the application after changing this file.
 
@@ -50,13 +46,17 @@ Edit `scoring.json`:
 ```json
 {
   "points_per_service_per_minute": 10,
+  "one_time_points": 10,
+  "one_time_services": ["syslog"],
   "service_timeout_seconds": 300,
   "score_interval_seconds": 60,
-  "services": ["webui", "radius", "tacacs"]
+  "services": ["syslog", "radius", "tacacs"]
 }
 ```
 
-At every scoring interval, each active green service awards
+The first valid SYSLOG packet gives the participant `one_time_points` once.
+SYSLOG stays green and never times out; additional packets do not add points.
+At every scoring interval, each other active green service awards
 `points_per_service_per_minute` points. A green service turns red when it has
 not received a refresh event within `service_timeout_seconds`.
 
@@ -93,8 +93,18 @@ Live mode follows these two files simultaneously by default:
 LOG_MODE=live python app.py
 ```
 
-- `/var/log/syslog` for Digi WebUI `web`, `https`, or `webui` events
+- `/var/log/syslog` for captured `SYSLOG local0.notice` or
+  `SYSLOG local0.warning` packets sent to UDP/514
 - `/var/log/tac_plus_acct.log` for TACACS+ and RADIUS SSH accounting
+
+The SYSLOG parser uses the source IP before the source port:
+
+```text
+10:55:08.117927 enp0s3 In IP 10.10.65.72.47973 > 10.10.65.214.514: SYSLOG local0.notice, length: 92
+```
+
+In this example, `10.10.65.72` receives 10 points the first time the line is
+detected. It is not marked disconnected later.
 
 In `tac_plus_acct.log`, `admintac` is classified as TACACS+ and
 `adminradius` is classified as RADIUS. `start` turns the service green and
@@ -146,7 +156,7 @@ Post a normalized event:
 ```bash
 curl -X POST http://localhost:8000/api/event \
   -H "Content-Type: application/json" \
-  -d '{"participant_ip":"10.10.65.72","service":"webui","status":"green","event_type":"login_success","username":"admin","raw":"manual test"}'
+  -d '{"participant_ip":"10.10.65.72","service":"syslog","status":"green","event_type":"syslog_received","raw":"manual test"}'
 ```
 
 Other endpoints:
@@ -173,7 +183,7 @@ Do not use `users.json` as the state file.
 
 Parser functions and regular expressions are in `parsers.py`:
 
-- `parse_digi_webui(line)`
+- `parse_syslog(line)`
 - `parse_aaa_accounting(line)`
 - `parse_radius(line)`
 - `parse_tacacs(line)`
@@ -186,10 +196,10 @@ shape:
 ```json
 {
   "participant_ip": "10.10.65.72",
-  "service": "webui",
+  "service": "syslog",
   "status": "green",
-  "event_type": "login_success",
-  "username": "admin",
+  "event_type": "syslog_received",
+  "username": null,
   "raw": "original log line"
 }
 ```
