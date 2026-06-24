@@ -28,7 +28,6 @@ Edit `users.json`. Each router IP must be unique:
     {
       "name": "Javi",
       "router_ip": "10.10.65.72",
-      "display_name": "Javi",
       "syslog_host": "00409DDE26B5"
     }
   ]
@@ -39,7 +38,8 @@ Edit `users.json`. Each router IP must be unique:
 is the Digi hostname or MAC found immediately after the timestamp in syslog.
 It is required when the WebUI syslog message does not contain the router IP.
 The `remote=` value is the client workstation and must not be used as the
-participant router IP.
+participant router IP. The dashboard displays the value from `name`; there is
+no separate display-name field to maintain.
 
 Restart the application after changing this file.
 
