@@ -61,6 +61,12 @@ award `points_per_service_first_login` immediately. Logout does not remove
 points: the service changes from Active to Logged to show that its challenge
 was completed. Later logins do not award duplicate points.
 
+Participants who complete all three services and reach 30 points are listed in
+the Scoring card. The Winner button cycles through every qualified participant
+with a raffle-style reel and randomly selects one winner. The final view shows
+only the winner's name. At least two qualified participants are required to
+start a draw.
+
 Restart the application after changing scoring settings.
 
 ## Run demo mode
@@ -133,6 +139,10 @@ the 12-character Digi hostname and its `syslog_host` entry in `users.json`.
 Existing RADIUS SSH accounting and native FreeRADIUS parsing continue to work
 unchanged.
 
+The same stored Digi web-session messages are recognized for `admintac`:
+opening a session turns TACACS+ Active and logout changes it to Logged. Existing
+TACACS+ SSH accounting remains unchanged.
+
 To select different or additional files, use a comma-separated list:
 
 ```bash
@@ -204,6 +214,7 @@ Parser functions and regular expressions are in `parsers.py`:
 
 - `parse_syslog(line)`
 - `parse_digi_radius_session(line)`
+- `parse_digi_tacacs_session(line)`
 - `parse_aaa_accounting(line)`
 - `parse_radius(line)`
 - `parse_tacacs(line)`

@@ -16,6 +16,7 @@ const elements = {
   winnerButton: document.querySelector("#winner-button"),
   resetButton: document.querySelector("#reset-button"),
   winnerOverlay: document.querySelector("#winner-overlay"),
+  winnerKicker: document.querySelector("#winner-kicker"),
   winnerName: document.querySelector("#winner-name"),
   winnerScore: document.querySelector("#winner-score"),
   closeWinner: document.querySelector("#close-winner"),
@@ -32,6 +33,10 @@ let currentParticipants = [];
 let fireworksFrame;
 let fireworksStopTimer;
 let fireworksBurstTimer;
+let drawCycleTimer;
+let drawFinishTimer;
+let winnerDrawActive = false;
+let qualifyingScore = 30;
 
 function applyTheme(theme, persist = false) {
   const selectedTheme = theme === "light" ? "light" : "dark";
@@ -195,6 +200,12 @@ function renderState(state) {
   const scoring = state.scoring || {};
   const participants = state.participants || [];
   currentParticipants = participants;
+  const serviceCount = scoring.services?.length || 3;
+  qualifyingScore =
+    Number(scoring.one_time_points || 10)
+    + Math.max(0, serviceCount - 1)
+      * Number(scoring.points_per_service_first_login || 10);
+  const eligibleParticipants = getEligibleParticipants();
 
   elements.leaderName.textContent = summary.leader || "—";
   elements.leaderScore.textContent = `${Number(summary.leader_score || 0).toLocaleString()} points`;
@@ -202,9 +213,15 @@ function renderState(state) {
     `${summary.active_services || 0} / ${summary.maximum_active_services || 0}`;
   elements.participantCount.textContent = summary.participant_count || 0;
 
-  elements.scoreCountdown.textContent = "Instant";
-  elements.scoringRule.textContent =
-    `+${scoring.one_time_points || 10} SYSLOG · +${scoring.points_per_service_first_login || 10} first RADIUS/TACACS login`;
+  elements.scoreCountdown.textContent = eligibleParticipants.length
+    ? eligibleParticipants.map((participant) => participant.display_name).join(" · ")
+    : `Waiting for ${qualifyingScore} pts`;
+  elements.scoreCountdown.title = eligibleParticipants.length
+    ? `${eligibleParticipants.length} eligible: ${eligibleParticipants.map((participant) => participant.display_name).join(", ")}`
+    : "No participants are eligible yet";
+  elements.scoringRule.textContent = eligibleParticipants.length
+    ? `${eligibleParticipants.length} eligible for winner draw`
+    : "Complete SYSLOG, RADIUS, and TACACS to enter";
   elements.lastUpdated.textContent = `Updated ${formatTime(state.updated_at)}`;
 
   renderParticipants(participants);
@@ -340,26 +357,121 @@ function launchFireworks() {
   }
 }
 
+function getEligibleParticipants() {
+  return currentParticipants.filter((participant) => {
+    const services = Object.values(participant.services || {});
+    return (
+      Number(participant.score || 0) >= qualifyingScore
+      && services.length > 0
+      && services.every((service) => service.earned)
+    );
+  });
+}
+
+function randomIndex(length) {
+  if (window.crypto?.getRandomValues) {
+    const values = new Uint32Array(1);
+    const maximum = Math.floor(0x100000000 / length) * length;
+    do {
+      window.crypto.getRandomValues(values);
+    } while (values[0] >= maximum);
+    return values[0] % length;
+  }
+  return Math.floor(Math.random() * length);
+}
+
+function shuffledParticipants(participants) {
+  const shuffled = [...participants];
+  for (let index = shuffled.length - 1; index > 0; index -= 1) {
+    const replacement = randomIndex(index + 1);
+    [shuffled[index], shuffled[replacement]] = [shuffled[replacement], shuffled[index]];
+  }
+  return shuffled;
+}
+
 function showWinner() {
-  const winner = currentParticipants[0];
-  if (!winner) {
-    showToast("No participants available", true);
+  const candidates = getEligibleParticipants();
+  if (!candidates.length) {
+    showToast(`No participants have reached ${qualifyingScore} points`, true);
     return;
   }
-  elements.winnerName.textContent = winner.display_name;
-  elements.winnerScore.textContent = `${Number(winner.score || 0).toLocaleString()} points`;
+  if (candidates.length === 1) {
+    showToast(
+      `Only ${candidates[0].display_name} has ${qualifyingScore} points. Wait for another finalist.`,
+      true,
+    );
+    return;
+  }
+
+  clearTimeout(drawCycleTimer);
+  clearTimeout(drawFinishTimer);
+  winnerDrawActive = true;
+  elements.winnerButton.disabled = true;
+  elements.closeWinner.disabled = true;
+  elements.winnerOverlay.querySelector(".winner-announcement").classList.add("is-drawing");
+  elements.winnerOverlay.querySelector(".winner-announcement").classList.remove("is-revealed");
+  elements.winnerKicker.textContent = "🎲 DRAWING WINNER 🎲";
+  elements.winnerScore.hidden = false;
+  elements.winnerScore.textContent =
+    `${candidates.length} finalist${candidates.length === 1 ? "" : "s"}`;
   elements.winnerOverlay.hidden = false;
   document.body.classList.add("celebrating");
-  launchFireworks();
-  elements.closeWinner.focus();
+
+  const winner = candidates[randomIndex(candidates.length)];
+  const reelCandidates = shuffledParticipants(candidates);
+  const totalSteps = 32 + randomIndex(8);
+  let step = 0;
+
+  function showReelName(name) {
+    elements.winnerName.classList.remove("is-rolling");
+    void elements.winnerName.offsetWidth;
+    elements.winnerName.textContent = name;
+    elements.winnerName.classList.add("is-rolling");
+  }
+
+  function finishDraw() {
+    showReelName(winner.display_name);
+    elements.winnerKicker.textContent = "🏆 WINNER 🏆";
+    elements.winnerScore.textContent = "";
+    elements.winnerScore.hidden = true;
+    const announcement = elements.winnerOverlay.querySelector(".winner-announcement");
+    announcement.classList.remove("is-drawing");
+    announcement.classList.add("is-revealed");
+    winnerDrawActive = false;
+    elements.winnerButton.disabled = false;
+    elements.closeWinner.disabled = false;
+    launchFireworks();
+    elements.closeWinner.focus();
+  }
+
+  function spinReel() {
+    if (step >= totalSteps) {
+      finishDraw();
+      return;
+    }
+    const candidate = reelCandidates[step % reelCandidates.length];
+    showReelName(candidate.display_name);
+    step += 1;
+    const progress = step / totalSteps;
+    const delay = 65 + Math.round(Math.pow(progress, 3.2) * 330);
+    drawCycleTimer = window.setTimeout(spinReel, delay);
+  }
+
+  spinReel();
 }
 
 function closeWinner() {
+  if (winnerDrawActive) return;
   elements.winnerOverlay.hidden = true;
   document.body.classList.remove("celebrating");
   window.cancelAnimationFrame(fireworksFrame);
   clearTimeout(fireworksStopTimer);
   clearInterval(fireworksBurstTimer);
+  clearTimeout(drawCycleTimer);
+  clearTimeout(drawFinishTimer);
+  const announcement = elements.winnerOverlay.querySelector(".winner-announcement");
+  announcement.classList.remove("is-drawing", "is-revealed");
+  elements.winnerName.classList.remove("is-rolling");
   elements.winnerButton.focus();
 }
 

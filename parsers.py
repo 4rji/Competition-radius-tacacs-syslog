@@ -135,6 +135,31 @@ def parse_digi_radius_session(line: str) -> dict[str, Any] | None:
     )
 
 
+def parse_digi_tacacs_session(line: str) -> dict[str, Any] | None:
+    """Treat admintac Digi web sessions as TACACS+ activity."""
+    digi_match = DIGI_SYSLOG_PATTERN.search(line)
+    session_match = DIGI_WEB_SESSION_PATTERN.search(line)
+    if (
+        not digi_match
+        or not session_match
+        or session_match.group("username").lower() != "admintac"
+    ):
+        return None
+
+    is_login = session_match.group("action").lower().startswith("successfully")
+    return _event(
+        line=line,
+        participant_ip=None,
+        participant_id=digi_match.group("host"),
+        service="tacacs",
+        status="green" if is_login else "red",
+        event_type="web_session_opened" if is_login else "web_session_logout",
+        username=session_match.group("username"),
+        remote_ip=session_match.group("remote_ip"),
+        timestamp=_normalize_timestamp(digi_match.group("timestamp")),
+    )
+
+
 def parse_aaa_accounting(line: str) -> dict[str, Any] | None:
     """Parse tac_plus accounting records for TACACS+ and RADIUS SSH users."""
     match = AAA_ACCOUNTING_PATTERN.search(line)
@@ -234,6 +259,10 @@ def parse_log_events(line: str) -> list[dict[str, Any]]:
     digi_radius_event = parse_digi_radius_session(line)
     if digi_radius_event:
         events.append(digi_radius_event)
+
+    digi_tacacs_event = parse_digi_tacacs_session(line)
+    if digi_tacacs_event:
+        events.append(digi_tacacs_event)
 
     # A stored Digi line has already been fully classified above. The
     # remaining parsers cover independent AAA, FreeRADIUS, and TACACS+ logs.
