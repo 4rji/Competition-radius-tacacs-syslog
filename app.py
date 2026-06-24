@@ -77,6 +77,7 @@ class ConnectionManager:
 
 
 connections = ConnectionManager()
+unknown_participant_identifiers: set[str] = set()
 
 
 async def state_snapshot() -> dict[str, Any]:
@@ -96,8 +97,16 @@ async def process_log_line(line: str) -> None:
     for event in events:
         try:
             changed = await scoreboard.apply_event(event) or changed
-        except ValueError:
-            # Ignore valid-looking events from router IDs not assigned in users.json.
+        except ValueError as error:
+            # Report each unknown source once instead of silently losing its events.
+            participant_key = event.get("participant_ip") or event.get("participant_id")
+            identifier = str(participant_key)
+            if (
+                identifier not in unknown_participant_identifiers
+                and len(unknown_participant_identifiers) < 100
+            ):
+                unknown_participant_identifiers.add(identifier)
+                logger.warning("Ignoring log event: %s", error)
             continue
     if changed:
         await broadcast_state()

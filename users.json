@@ -1,19 +1,42 @@
 {
   "participants": [
     {
-      "name": "Havi",
-      "router_ip": "10.10.65.72",
-      "syslog_host": "00409DDE26B5"
+      "name": "Ted",
+      "router_ip": "10.10.65.73"
+    },
+    {
+      "name": "Ron",
+      "router_ip": "10.10.65.77"
+    },
+    {
+      "name": "Eric",
+      "router_ip": "10.10.65.48"
+    },
+    {
+      "name": "Jeremy",
+      "router_ip": "10.10.65.78"
+    },
+    {
+      "name": "Poly",
+      "router_ip": "10.10.65.79"
+    },
+    {
+      "name": "James Scott",
+      "router_ip": "10.10.65.67"
+    },
+    {
+      "name": "John",
+      "router_ip": "10.10.65.68"
     },
     {
       "name": "Michael",
-      "router_ip": "192.168.10.12",
-      "syslog_host": "0027044166EF"
-    },
+      "router_ip": "10.10.65.62"
+    }
+  ],
+  "_commented_participants": [
     {
-      "name": "Peterson",
-      "router_ip": "192.168.10.13",
-      "syslog_host": "0027043fe607"
+      "name": "Usuario extra",
+      "router_ip": "10.10.65.57"
     }
   ]
 }

@@ -19,14 +19,22 @@ AAA_ACCOUNTING_PATTERN = re.compile(
     re.IGNORECASE,
 )
 SYSLOG_PACKET_PATTERN = re.compile(
-    rf"\bIP\s+(?P<source_ip>{IP_PATTERN})\.\d+\s*>\s*"
-    rf"{IP_PATTERN}\.514:\s+SYSLOG\s+local0\.(?:notice|warning)\b",
+    rf"\bIP\s+(?P<source_ip>{IP_PATTERN})(?:\.\d+)?\s*>\s*"
+    rf"{IP_PATTERN}\.(?:514|syslog):",
     re.IGNORECASE,
 )
-DIGI_SYSLOG_PATTERN = re.compile(
+ISO_SYSLOG_PATTERN = re.compile(
+    r"(?:<\d+>\d?\s*)?"
     r"(?P<timestamp>\d{4}-\d{2}-\d{2}T"
-    r"\d{2}:\d{2}:\d{2}(?:\.\d+)?(?:Z|[+-]\d{2}:\d{2}))\s+"
-    r"(?P<host>[0-9A-F]{12})\s+",
+    r"\d{2}:\d{2}:\d{2}(?:\.\d+)?(?:Z|[+-]\d{2}:\d{2})?)\s+"
+    rf"(?P<host>{IP_PATTERN}|[0-9A-Z][0-9A-Z_.:-]*)\s+",
+    re.IGNORECASE,
+)
+BSD_SYSLOG_PATTERN = re.compile(
+    r"^\s*(?:<\d+>)?"
+    r"(?:Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)\s+"
+    r"\d{1,2}\s+\d{2}:\d{2}:\d{2}\s+"
+    rf"(?P<host>{IP_PATTERN}|[0-9A-Z][0-9A-Z_.:-]*)\s+",
     re.IGNORECASE,
 )
 DIGI_WEB_SESSION_PATTERN = re.compile(
@@ -83,18 +91,31 @@ def _normalize_timestamp(value: str, format_string: str | None = None) -> str | 
     return parsed.isoformat()
 
 
+def _stored_syslog_source(line: str) -> tuple[str | None, str | None]:
+    match = ISO_SYSLOG_PATTERN.search(line)
+    if match:
+        return match.group("host"), _normalize_timestamp(match.group("timestamp"))
+
+    match = BSD_SYSLOG_PATTERN.search(line)
+    if match:
+        return match.group("host"), None
+
+    return None, None
+
+
 def parse_syslog(line: str) -> dict[str, Any] | None:
-    """Detect either a stored Digi syslog line or captured SYSLOG UDP traffic."""
-    digi_match = DIGI_SYSLOG_PATTERN.search(line)
-    if digi_match:
+    """Detect stored syslog lines or captured traffic sent to UDP/514."""
+    source_host, timestamp = _stored_syslog_source(line)
+    if source_host:
+        source_is_ip = bool(re.fullmatch(IP_PATTERN, source_host))
         return _event(
             line=line,
-            participant_ip=None,
-            participant_id=digi_match.group("host"),
+            participant_ip=source_host if source_is_ip else None,
+            participant_id=None if source_is_ip else source_host,
             service="syslog",
             status="green",
             event_type="syslog_received",
-            timestamp=_normalize_timestamp(digi_match.group("timestamp")),
+            timestamp=timestamp,
         )
 
     packet_match = SYSLOG_PACKET_PATTERN.search(line)
@@ -112,10 +133,10 @@ def parse_syslog(line: str) -> dict[str, Any] | None:
 
 def parse_digi_radius_session(line: str) -> dict[str, Any] | None:
     """Treat adminradius Digi web sessions as RADIUS activity."""
-    digi_match = DIGI_SYSLOG_PATTERN.search(line)
+    source_host, timestamp = _stored_syslog_source(line)
     session_match = DIGI_WEB_SESSION_PATTERN.search(line)
     if (
-        not digi_match
+        not source_host
         or not session_match
         or session_match.group("username").lower() != "adminradius"
     ):
@@ -124,23 +145,23 @@ def parse_digi_radius_session(line: str) -> dict[str, Any] | None:
     is_login = session_match.group("action").lower().startswith("successfully")
     return _event(
         line=line,
-        participant_ip=None,
-        participant_id=digi_match.group("host"),
+        participant_ip=source_host if re.fullmatch(IP_PATTERN, source_host) else None,
+        participant_id=None if re.fullmatch(IP_PATTERN, source_host) else source_host,
         service="radius",
         status="green" if is_login else "red",
         event_type="web_session_opened" if is_login else "web_session_logout",
         username=session_match.group("username"),
         remote_ip=session_match.group("remote_ip"),
-        timestamp=_normalize_timestamp(digi_match.group("timestamp")),
+        timestamp=timestamp,
     )
 
 
 def parse_digi_tacacs_session(line: str) -> dict[str, Any] | None:
     """Treat admintac Digi web sessions as TACACS+ activity."""
-    digi_match = DIGI_SYSLOG_PATTERN.search(line)
+    source_host, timestamp = _stored_syslog_source(line)
     session_match = DIGI_WEB_SESSION_PATTERN.search(line)
     if (
-        not digi_match
+        not source_host
         or not session_match
         or session_match.group("username").lower() != "admintac"
     ):
@@ -149,14 +170,14 @@ def parse_digi_tacacs_session(line: str) -> dict[str, Any] | None:
     is_login = session_match.group("action").lower().startswith("successfully")
     return _event(
         line=line,
-        participant_ip=None,
-        participant_id=digi_match.group("host"),
+        participant_ip=source_host if re.fullmatch(IP_PATTERN, source_host) else None,
+        participant_id=None if re.fullmatch(IP_PATTERN, source_host) else source_host,
         service="tacacs",
         status="green" if is_login else "red",
         event_type="web_session_opened" if is_login else "web_session_logout",
         username=session_match.group("username"),
         remote_ip=session_match.group("remote_ip"),
-        timestamp=_normalize_timestamp(digi_match.group("timestamp")),
+        timestamp=timestamp,
     )
 
 

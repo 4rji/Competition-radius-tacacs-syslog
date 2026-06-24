@@ -1,18 +1,42 @@
-# Digi Access Scoreboard demo stream
-10:55:08.117927 enp0s3 In IP 10.10.65.72.47973 > 10.10.65.214.514: SYSLOG local0.notice, length: 92
-radiusd: Access-Accept User-Name="admin" NAS-IP-Address=192.168.10.12
-tac_plus: user=admintac client=192.168.10.13 service=shell action=login result=success
-2026-06-24T16:13:19-05:00 0027044166EF user User admin successfully opened web session from IP 10.10.61.76 via port 443 (ID 16fae16aae)
-2026-06-24 08:41:31 -0500       10.10.65.72     adminradius     ssh     10.10.61.76     start   start_time=1782308491   task_id=4604    service=system  protocol=ssh
-2026-06-24 08:39:57 -0500       10.10.65.72     admintac        ssh     10.10.61.76     start   start_time=1782308397   task_id=26942   service=system  protocol=ssh
-radiusd: Acct-Status-Type = Start User-Name="admin" NAS-IP-Address=192.168.10.13
-2026-06-24T16:14:07-05:00 0027043fe607 user User admin successfully opened web session from IP 10.10.61.76 via port 443 (ID 16fae16aae)
-tac_plus: user=admintac client=192.168.10.12 service=shell action=login result=success
-radiusd: Acct-Status-Type = Stop User-Name="admin" NAS-IP-Address=192.168.10.12
-tac_plus: user=admintac client=192.168.10.13 action=logout
-2026-06-24 08:41:39 -0500       10.10.65.72     adminradius     ssh     10.10.61.76     stop    stop_time=1782308499    task_id=4604    service=system  protocol=ssh
-2026-06-24 08:40:03 -0500       10.10.65.72     admintac        ssh     10.10.61.76     stop    stop_time=1782308403    task_id=26942   service=system  protocol=ssh
-10:56:08.117927 enp0s3 In IP 10.10.65.72.47973 > 10.10.65.214.514: SYSLOG local0.notice, length: 92
-radiusd: Access-Accept User-Name="admin" NAS-IP-Address=192.168.10.12
-2026-06-24 08:42:18 -0500       10.10.65.72     adminradius     ssh     10.10.61.76     start   start_time=1782308538   task_id=10141   service=system  protocol=ssh
-2026-06-24 08:42:21 -0500       10.10.65.72     admintac        ssh     10.10.61.76     start   start_time=1782308541   task_id=10142   service=system  protocol=ssh
+# Digi Access Scoreboard demo stream for the current participants.
+# Each participant completes SYSLOG, RADIUS, and TACACS+ for a total of 30 points.
+
+# Ted - 10.10.65.73
+10:55:01.117927 enp0s3 In IP 10.10.65.73.47973 > 10.10.65.214.514: SYSLOG local0.notice, length: 92
+radiusd: Access-Accept User-Name="adminradius" NAS-IP-Address=10.10.65.73
+tac_plus: user=admintac client=10.10.65.73 service=shell action=login result=success
+
+# Ron - 10.10.65.77
+10:55:02.117927 enp0s3 In IP 10.10.65.77.47977 > 10.10.65.214.514: SYSLOG local0.notice, length: 92
+radiusd: Access-Accept User-Name="adminradius" NAS-IP-Address=10.10.65.77
+tac_plus: user=admintac client=10.10.65.77 service=shell action=login result=success
+
+# Eric - 10.10.65.48
+10:55:03.117927 enp0s3 In IP 10.10.65.48.47948 > 10.10.65.214.514: SYSLOG local0.notice, length: 92
+radiusd: Access-Accept User-Name="adminradius" NAS-IP-Address=10.10.65.48
+tac_plus: user=admintac client=10.10.65.48 service=shell action=login result=success
+
+# Jeremy - 10.10.65.78
+10:55:04.117927 enp0s3 In IP 10.10.65.78.47978 > 10.10.65.214.514: SYSLOG local0.notice, length: 92
+radiusd: Access-Accept User-Name="adminradius" NAS-IP-Address=10.10.65.78
+tac_plus: user=admintac client=10.10.65.78 service=shell action=login result=success
+
+# Poly - 10.10.65.79
+10:55:05.117927 enp0s3 In IP 10.10.65.79.47979 > 10.10.65.214.514: SYSLOG local0.notice, length: 92
+radiusd: Access-Accept User-Name="adminradius" NAS-IP-Address=10.10.65.79
+tac_plus: user=admintac client=10.10.65.79 service=shell action=login result=success
+
+# James Scott - 10.10.65.67
+10:55:06.117927 enp0s3 In IP 10.10.65.67.47967 > 10.10.65.214.514: SYSLOG local0.notice, length: 92
+radiusd: Access-Accept User-Name="adminradius" NAS-IP-Address=10.10.65.67
+tac_plus: user=admintac client=10.10.65.67 service=shell action=login result=success
+
+# John - 10.10.65.68
+10:55:07.117927 enp0s3 In IP 10.10.65.68.47968 > 10.10.65.214.514: SYSLOG local0.notice, length: 92
+radiusd: Access-Accept User-Name="adminradius" NAS-IP-Address=10.10.65.68
+tac_plus: user=admintac client=10.10.65.68 service=shell action=login result=success
+
+# Michael - 10.10.65.62
+10:55:08.117927 enp0s3 In IP 10.10.65.62.47962 > 10.10.65.214.514: SYSLOG local0.notice, length: 92
+radiusd: Access-Accept User-Name="adminradius" NAS-IP-Address=10.10.65.62
+tac_plus: user=admintac client=10.10.65.62 service=shell action=login result=success

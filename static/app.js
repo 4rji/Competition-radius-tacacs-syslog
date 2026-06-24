@@ -15,6 +15,11 @@ const elements = {
   themeColor: document.querySelector("#theme-color"),
   winnerButton: document.querySelector("#winner-button"),
   resetButton: document.querySelector("#reset-button"),
+  infoButton: document.querySelector("#info-button"),
+  infoOverlay: document.querySelector("#info-overlay"),
+  closeInfo: document.querySelector("#close-info"),
+  assignmentBody: document.querySelector("#assignment-body"),
+  assignmentCount: document.querySelector("#assignment-count"),
   winnerOverlay: document.querySelector("#winner-overlay"),
   winnerKicker: document.querySelector("#winner-kicker"),
   winnerName: document.querySelector("#winner-name"),
@@ -159,6 +164,30 @@ function renderParticipants(participants) {
   });
 }
 
+function renderAssignments(participants) {
+  elements.assignmentBody.replaceChildren();
+  elements.assignmentCount.textContent =
+    `${participants.length} participant${participants.length === 1 ? "" : "s"}`;
+
+  const sortedParticipants = participants
+    .slice()
+    .sort((left, right) => left.display_name.localeCompare(right.display_name));
+  const midpoint = Math.ceil(sortedParticipants.length / 2);
+
+  for (let index = 0; index < midpoint; index += 1) {
+    const left = sortedParticipants[index];
+    const right = sortedParticipants[index + midpoint];
+    const row = createElement("tr");
+    row.append(
+      createElement("td", "participant-name", left.display_name),
+      createElement("td", "router-ip assignment-ip", left.router_ip),
+      createElement("td", right ? "participant-name" : "", right?.display_name || ""),
+      createElement("td", right ? "router-ip assignment-ip" : "", right?.router_ip || ""),
+    );
+    elements.assignmentBody.append(row);
+  }
+}
+
 function renderEvents(events) {
   elements.eventFeed.replaceChildren();
   if (!events.length) {
@@ -225,6 +254,7 @@ function renderState(state) {
   elements.lastUpdated.textContent = `Updated ${formatTime(state.updated_at)}`;
 
   renderParticipants(participants);
+  renderAssignments(participants);
   renderEvents(state.recent_events || []);
 }
 
@@ -475,6 +505,18 @@ function closeWinner() {
   elements.winnerButton.focus();
 }
 
+function showInfo() {
+  elements.infoOverlay.hidden = false;
+  document.body.classList.add("dialog-open");
+  elements.closeInfo.focus();
+}
+
+function closeInfo() {
+  elements.infoOverlay.hidden = true;
+  document.body.classList.remove("dialog-open");
+  elements.infoButton.focus();
+}
+
 let toastTimer;
 function showToast(message, isError = false) {
   clearTimeout(toastTimer);
@@ -491,11 +533,20 @@ elements.themeToggle.addEventListener("click", () => {
 });
 
 elements.winnerButton.addEventListener("click", showWinner);
+elements.infoButton.addEventListener("click", showInfo);
+elements.closeInfo.addEventListener("click", closeInfo);
+elements.infoOverlay.addEventListener("click", (event) => {
+  if (event.target === elements.infoOverlay) closeInfo();
+});
 elements.closeWinner.addEventListener("click", closeWinner);
 elements.winnerOverlay.addEventListener("click", (event) => {
   if (event.target === elements.winnerOverlay) closeWinner();
 });
 document.addEventListener("keydown", (event) => {
+  if (event.key === "Escape" && !elements.infoOverlay.hidden) {
+    closeInfo();
+    return;
+  }
   if (event.key === "Escape" && !elements.winnerOverlay.hidden) closeWinner();
 });
 
