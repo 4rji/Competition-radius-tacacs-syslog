@@ -79,6 +79,7 @@ class ConnectionManager:
 
 connections = ConnectionManager()
 unknown_participant_identifiers: set[str] = set()
+recognized_syslog_identifiers: set[str] = set()
 
 
 async def state_snapshot() -> dict[str, Any]:
@@ -98,12 +99,24 @@ async def process_log_line(line: str) -> None:
 
     changed = False
     for event in events:
+        participant_key = event.get("participant_ip") or event.get("participant_id")
+        identifier = str(participant_key)
         try:
-            changed = await scoreboard.apply_event(event) or changed
+            event_changed = await scoreboard.apply_event(event)
+            changed = event_changed or changed
+            if (
+                event.get("service") == "syslog"
+                and identifier not in recognized_syslog_identifiers
+                and len(recognized_syslog_identifiers) < 100
+            ):
+                recognized_syslog_identifiers.add(identifier)
+                logger.info(
+                    "Detected SYSLOG from %s%s",
+                    identifier,
+                    "" if event_changed else " (already credited)",
+                )
         except ValueError as error:
             # Report each unknown source once instead of silently losing its events.
-            participant_key = event.get("participant_ip") or event.get("participant_id")
-            identifier = str(participant_key)
             if (
                 identifier not in unknown_participant_identifiers
                 and len(unknown_participant_identifiers) < 100
@@ -154,7 +167,11 @@ def live_log_paths() -> list[Path]:
     elif os.environ.get("LOG_FILE"):
         values = [os.environ["LOG_FILE"]]
     else:
-        values = ["/var/log/syslog", "/var/log/tac_plus_acct.log"]
+        values = [
+            "/tmp/digi-scoreboard-syslog.log",
+            "/var/log/syslog",
+            "/var/log/tac_plus_acct.log",
+        ]
     return [Path(value.strip()).expanduser() for value in values if value.strip()]
 
 

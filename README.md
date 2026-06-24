@@ -121,12 +121,14 @@ LOG_MODE=demo LOG_FILE=/path/to/sample.log python app.py
 
 ## Run live mode
 
-Live mode follows these two files simultaneously by default:
+Live mode follows these files simultaneously by default:
 
 ```bash
 LOG_MODE=live python app.py
 ```
 
+- `/tmp/digi-scoreboard-syslog.log` for source-IP packet captures from
+  `tcpdump`
 - `/var/log/syslog` for stored Digi messages identified by timestamp and
   12-character Digi hostname
 - `/var/log/tac_plus_acct.log` for TACACS+ and RADIUS SSH accounting
