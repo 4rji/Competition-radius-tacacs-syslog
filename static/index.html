@@ -1,10 +1,21 @@
 <!doctype html>
-<html lang="en">
+<html lang="en" data-theme="dark">
   <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <meta name="theme-color" content="#111827">
+    <meta id="theme-color" name="theme-color" content="#101419">
     <title>Digi Access Scoreboard</title>
+    <script>
+      (() => {
+        try {
+          if (localStorage.getItem("digi-scoreboard-theme") === "light") {
+            document.documentElement.dataset.theme = "light";
+          }
+        } catch (_) {
+          // The dark theme remains the default when storage is unavailable.
+        }
+      })();
+    </script>
     <link rel="stylesheet" href="/static/style.css">
     <script src="/static/app.js" defer></script>
   </head>
@@ -24,6 +35,16 @@
             <span class="pulse-dot"></span>
             <span>Connecting</span>
           </div>
+          <button
+            id="theme-toggle"
+            class="theme-toggle"
+            type="button"
+            aria-label="Switch to light mode"
+            title="Switch to light mode"
+          >
+            <span id="theme-icon" class="theme-icon" aria-hidden="true">☀</span>
+            <span id="theme-label">Light mode</span>
+          </button>
           <button id="reset-button" class="reset-button" type="button">Reset board</button>
         </div>
       </header>

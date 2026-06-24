@@ -9,9 +9,15 @@ const elements = {
   scoreCountdown: document.querySelector("#score-countdown"),
   scoringRule: document.querySelector("#scoring-rule"),
   lastUpdated: document.querySelector("#last-updated"),
+  themeToggle: document.querySelector("#theme-toggle"),
+  themeIcon: document.querySelector("#theme-icon"),
+  themeLabel: document.querySelector("#theme-label"),
+  themeColor: document.querySelector("#theme-color"),
   resetButton: document.querySelector("#reset-button"),
   toast: document.querySelector("#toast"),
 };
+
+const THEME_STORAGE_KEY = "digi-scoreboard-theme";
 
 let socket;
 let reconnectTimer;
@@ -19,6 +25,26 @@ let pingTimer;
 let countdownTimer;
 let scoreInterval = null;
 let nextScoreAt = 0;
+
+function applyTheme(theme, persist = false) {
+  const selectedTheme = theme === "light" ? "light" : "dark";
+  const switchTarget = selectedTheme === "dark" ? "light" : "dark";
+
+  document.documentElement.dataset.theme = selectedTheme;
+  elements.themeIcon.textContent = selectedTheme === "dark" ? "☀" : "☾";
+  elements.themeLabel.textContent = `${titleCase(switchTarget)} mode`;
+  elements.themeToggle.setAttribute("aria-label", `Switch to ${switchTarget} mode`);
+  elements.themeToggle.title = `Switch to ${switchTarget} mode`;
+  elements.themeColor.content = selectedTheme === "dark" ? "#101419" : "#f3f5f6";
+
+  if (persist) {
+    try {
+      localStorage.setItem(THEME_STORAGE_KEY, selectedTheme);
+    } catch (_) {
+      // Theme switching still works when storage is unavailable.
+    }
+  }
+}
 
 function createElement(tag, className, text) {
   const element = document.createElement(tag);
@@ -246,6 +272,11 @@ function showToast(message, isError = false) {
   }, 3000);
 }
 
+elements.themeToggle.addEventListener("click", () => {
+  const currentTheme = document.documentElement.dataset.theme;
+  applyTheme(currentTheme === "dark" ? "light" : "dark", true);
+});
+
 elements.resetButton.addEventListener("click", async () => {
   const confirmed = window.confirm("Reset all scores, statuses, and event history?");
   if (!confirmed) return;
@@ -263,6 +294,7 @@ elements.resetButton.addEventListener("click", async () => {
   }
 });
 
+applyTheme(document.documentElement.dataset.theme);
 loadInitialState();
 connectWebSocket();
 updateCountdown();

@@ -1,4 +1,39 @@
 :root {
+  color-scheme: dark;
+  --digi-green: #82d653;
+  --digi-green-dark: #91d86b;
+  --digi-green-soft: #1f3824;
+  --ink: #f2f5f7;
+  --ink-soft: #c3cbd3;
+  --muted: #8f9aa6;
+  --line: #323b46;
+  --canvas: #101419;
+  --panel: #1a2027;
+  --danger: #ff7777;
+  --danger-soft: #3a2024;
+  --body-glow: rgba(114, 190, 68, 0.1);
+  --control-background: #181e25;
+  --control-border: #46515d;
+  --control-hover: #222a32;
+  --card-border: #303943;
+  --card-shadow: 0 8px 22px rgba(0, 0, 0, 0.16);
+  --table-heading: #161b21;
+  --row-border: #29313a;
+  --row-hover: #20272f;
+  --rank-background: #29323b;
+  --rank-foreground: #d5dbe1;
+  --leader-rank-background: linear-gradient(145deg, #345829, #29451f);
+  --leader-rank-foreground: #d9f4ca;
+  --success-foreground: #9cde78;
+  --danger-foreground: #ff8a8a;
+  --raw-text: #7f8b97;
+  --footer-logo-filter: invert(1) hue-rotate(180deg);
+  --footer-logo-blend: screen;
+  --shadow: 0 12px 30px rgba(0, 0, 0, 0.24);
+}
+
+:root[data-theme="light"] {
+  color-scheme: light;
   --digi-green: #72be44;
   --digi-green-dark: #4b9f2c;
   --digi-green-soft: #eef8e8;
@@ -10,6 +45,24 @@
   --panel: #ffffff;
   --danger: #e24d4d;
   --danger-soft: #fff0f0;
+  --body-glow: rgba(114, 190, 68, 0.12);
+  --control-background: #ffffff;
+  --control-border: #cfd4da;
+  --control-hover: #ffffff;
+  --card-border: rgba(221, 225, 229, 0.9);
+  --card-shadow: 0 8px 22px rgba(25, 31, 38, 0.045);
+  --table-heading: #fafbfb;
+  --row-border: #edf0f2;
+  --row-hover: #fbfcfb;
+  --rank-background: #eef0f2;
+  --rank-foreground: #4d5158;
+  --leader-rank-background: linear-gradient(145deg, #dff5d1, #bce6a4);
+  --leader-rank-foreground: #254418;
+  --success-foreground: #377d20;
+  --danger-foreground: #b13c3c;
+  --raw-text: #858b94;
+  --footer-logo-filter: none;
+  --footer-logo-blend: multiply;
   --shadow: 0 12px 30px rgba(25, 31, 38, 0.08);
 }
 
@@ -26,7 +79,7 @@ body {
   margin: 0;
   color: var(--ink);
   background:
-    radial-gradient(circle at 92% 5%, rgba(114, 190, 68, 0.12), transparent 25rem),
+    radial-gradient(circle at 92% 5%, var(--body-glow), transparent 25rem),
     var(--canvas);
   font-family: Inter, ui-sans-serif, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
   font-size: 16px;
@@ -103,6 +156,7 @@ h1 {
 }
 
 .connection-badge,
+.theme-toggle,
 .reset-button {
   display: inline-flex;
   align-items: center;
@@ -115,7 +169,7 @@ h1 {
 .connection-badge {
   padding: 0 17px;
   color: var(--muted);
-  background: #fff;
+  background: var(--control-background);
   border: 1px solid var(--line);
 }
 
@@ -142,19 +196,40 @@ h1 {
   animation: pulse 1.8s infinite;
 }
 
+.theme-toggle,
 .reset-button {
   padding: 0 18px;
   color: var(--ink-soft);
   background: transparent;
-  border: 1px solid #cfd4da;
+  border: 1px solid var(--control-border);
   cursor: pointer;
   transition: 160ms ease;
 }
 
+.theme-toggle:hover,
+.theme-toggle:focus-visible {
+  color: var(--ink);
+  background: var(--control-hover);
+  border-color: var(--muted);
+}
+
+.theme-icon {
+  width: 1.05em;
+  font-size: 1.05rem;
+  line-height: 1;
+  text-align: center;
+}
+
 .reset-button:hover {
   color: var(--danger);
-  background: #fff;
+  background: var(--control-hover);
   border-color: rgba(226, 77, 77, 0.55);
+}
+
+.theme-toggle:focus-visible,
+.reset-button:focus-visible {
+  outline: 3px solid rgba(114, 190, 68, 0.32);
+  outline-offset: 2px;
 }
 
 .reset-button:disabled {
@@ -175,9 +250,9 @@ h1 {
   min-height: 130px;
   padding: 22px 24px;
   background: var(--panel);
-  border: 1px solid rgba(221, 225, 229, 0.9);
+  border: 1px solid var(--card-border);
   border-radius: 18px;
-  box-shadow: 0 8px 22px rgba(25, 31, 38, 0.045);
+  box-shadow: var(--card-shadow);
 }
 
 .summary-card-accent::after {
@@ -219,7 +294,7 @@ h1 {
 .panel {
   overflow: hidden;
   background: var(--panel);
-  border: 1px solid rgba(221, 225, 229, 0.95);
+  border: 1px solid var(--card-border);
   border-radius: 20px;
   box-shadow: var(--shadow);
 }
@@ -265,7 +340,7 @@ td {
 
 th {
   color: var(--muted);
-  background: #fafbfb;
+  background: var(--table-heading);
   border-bottom: 1px solid var(--line);
   font-size: 0.72rem;
   font-weight: 800;
@@ -275,7 +350,7 @@ th {
 }
 
 td {
-  border-bottom: 1px solid #edf0f2;
+  border-bottom: 1px solid var(--row-border);
   font-size: 0.94rem;
 }
 
@@ -284,7 +359,7 @@ tbody tr {
 }
 
 tbody tr:hover {
-  background: #fbfcfb;
+  background: var(--row-hover);
 }
 
 tbody tr:last-child td {
@@ -303,15 +378,15 @@ tbody tr:last-child td {
   height: 38px;
   place-items: center;
   border-radius: 12px;
-  color: var(--ink-soft);
-  background: #eef0f2;
+  color: var(--rank-foreground);
+  background: var(--rank-background);
   font-size: 1rem;
   font-weight: 850;
 }
 
 tr:first-child .rank-badge {
-  color: #254418;
-  background: linear-gradient(145deg, #dff5d1, #bce6a4);
+  color: var(--leader-rank-foreground);
+  background: var(--leader-rank-background);
 }
 
 .participant-name {
@@ -346,7 +421,7 @@ tr:first-child .rank-badge {
 }
 
 .status-green {
-  color: #377d20;
+  color: var(--success-foreground);
   background: var(--digi-green-soft);
 }
 
@@ -356,7 +431,7 @@ tr:first-child .rank-badge {
 }
 
 .status-red {
-  color: #b13c3c;
+  color: var(--danger-foreground);
   background: var(--danger-soft);
 }
 
@@ -433,7 +508,7 @@ tr:first-child .rank-badge {
 .event-item {
   position: relative;
   padding: 17px 20px 17px 43px;
-  border-bottom: 1px solid #edf0f2;
+  border-bottom: 1px solid var(--row-border);
 }
 
 .event-item::before {
@@ -491,7 +566,7 @@ tr:first-child .rank-badge {
 .event-raw {
   overflow: hidden;
   margin: 7px 0 0;
-  color: #858b94;
+  color: var(--raw-text);
   font-family: "SFMono-Regular", Consolas, "Liberation Mono", monospace;
   font-size: 0.7rem;
   line-height: 1.4;
@@ -529,7 +604,8 @@ footer img {
   height: 58px;
   object-fit: contain;
   object-position: left center;
-  mix-blend-mode: multiply;
+  filter: var(--footer-logo-filter);
+  mix-blend-mode: var(--footer-logo-blend);
 }
 
 footer p {
@@ -623,6 +699,7 @@ footer p {
   }
 
   .connection-badge,
+  .theme-toggle,
   .reset-button {
     justify-content: center;
   }
@@ -637,6 +714,7 @@ footer p {
 
   .header-actions {
     flex-direction: row;
+    flex-wrap: wrap;
   }
 
   .summary-grid {
