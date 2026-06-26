@@ -447,6 +447,22 @@ h1 {
   font-weight: 750;
 }
 
+.ip-link {
+  color: var(--digi-green-dark);
+  text-decoration: none;
+  border-bottom: 1px dashed currentColor;
+  cursor: pointer;
+  transition: color 0.15s ease, border-color 0.15s ease;
+}
+
+.ip-link:hover,
+.ip-link:focus-visible {
+  color: var(--digi-green);
+  border-bottom-color: transparent;
+  text-decoration: none;
+  outline: none;
+}
+
 .assignment-count {
   margin: 0;
   color: var(--muted);

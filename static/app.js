@@ -168,6 +168,19 @@ function renderParticipants(participants) {
   });
 }
 
+function ipLinkCell(className, ip) {
+  const cell = createElement("td", className);
+  if (ip) {
+    const link = createElement("a", "ip-link", ip);
+    link.href = `https://${ip}`;
+    link.target = "_blank";
+    link.rel = "noopener noreferrer";
+    link.title = `Open https://${ip} in a new tab`;
+    cell.append(link);
+  }
+  return cell;
+}
+
 function renderAssignments(participants) {
   elements.assignmentBody.replaceChildren();
   elements.assignmentCount.textContent =
@@ -184,9 +197,9 @@ function renderAssignments(participants) {
     const row = createElement("tr");
     row.append(
       createElement("td", "participant-name", left.display_name),
-      createElement("td", "router-ip assignment-ip", left.router_ip),
+      ipLinkCell("router-ip assignment-ip", left.router_ip),
       createElement("td", right ? "participant-name" : "", right?.display_name || ""),
-      createElement("td", right ? "router-ip assignment-ip" : "", right?.router_ip || ""),
+      ipLinkCell(right ? "router-ip assignment-ip" : "", right?.router_ip),
     );
     elements.assignmentBody.append(row);
   }
