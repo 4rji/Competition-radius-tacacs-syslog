@@ -1105,6 +1105,17 @@ footer p {
   margin: 0;
 }
 
+.footer-text {
+  text-align: right;
+}
+
+.footer-credit {
+  margin-top: 2px;
+  color: var(--digi-green-dark);
+  font-weight: 700;
+  letter-spacing: 0.02em;
+}
+
 .toast {
   position: fixed;
   right: 25px;
