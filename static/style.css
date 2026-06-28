@@ -361,9 +361,12 @@ h1 {
 }
 
 .info-dialog {
+  display: flex;
+  flex-direction: column;
   width: min(920px, 100%);
   max-height: calc(100vh - 48px);
-  overflow: hidden;
+  overflow: auto;
+  overscroll-behavior: contain;
   padding: 20px;
   background: var(--canvas);
   border: 1px solid var(--control-border);
@@ -412,6 +415,10 @@ h1 {
 }
 
 .info-assignment {
+  display: flex;
+  flex: 1 1 auto;
+  flex-direction: column;
+  min-height: 0;
   overflow: hidden;
   margin-top: 12px;
   background: var(--panel);
@@ -420,6 +427,7 @@ h1 {
 }
 
 .info-assignment-heading {
+  flex: 0 0 auto;
   padding: 12px 18px;
   border-bottom: 1px solid var(--line);
 }
@@ -431,6 +439,12 @@ h1 {
 
 .assignment-table {
   min-width: 760px;
+}
+
+.info-assignment .table-scroll {
+  min-height: 0;
+  overflow: auto;
+  overscroll-behavior: contain;
 }
 
 .assignment-table th,

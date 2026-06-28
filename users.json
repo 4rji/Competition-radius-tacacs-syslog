@@ -1,13 +1,12 @@
 {
   "participants": [
     {
-      "name": "Havi",
-      "router_ip": "10.10.65.72",
-      "syslog_host": "00409DDE26B5"
-    },
-    {
       "name": "Ted",
       "router_ip": "10.10.65.73"
+    },
+    {
+      "name": "Zach",
+      "router_ip": "10.10.65.74"
     },
     {
       "name": "Ron",
@@ -22,12 +21,16 @@
       "router_ip": "10.10.65.78"
     },
     {
-      "name": "Poly",
+      "name": "Polycap",
       "router_ip": "10.10.65.79"
     },
     {
-      "name": "James Scott",
+      "name": "James",
       "router_ip": "10.10.65.67"
+    },
+    {
+      "name": "Scott",
+      "router_ip": "10.10.65.42"
     },
     {
       "name": "John",
@@ -38,7 +41,16 @@
       "router_ip": "10.10.65.62"
     },
     {
-      "name": "Usuario extra",
+      "name": "Havi",
+      "router_ip": "10.10.65.72",
+      "syslog_host": "00409DDE26B5"
+    },
+    {
+      "name": "Zachary",
+      "router_ip": "10.10.65.75"
+    },
+    {
+      "name": "Guest",
       "router_ip": "10.10.65.57"
     }
   ]
