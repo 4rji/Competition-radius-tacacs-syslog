@@ -3,3 +3,5 @@
 __pycache__/
 *.py[cod]
 scoreboard-state.json
+.atl/skill-registry.md
+.atl/.skill-registry.cache.json
