@@ -1,5 +1,10 @@
 # Digi Router Configuration Training
 
+![Digi Router Configuration Training dashboard](config_pages.png)
+
+*Figure 1. The project dashboard is the starting page for the training
+modules.*
+
 ## Purpose
 
 This project is a self-paced, browser-based training guide for common Digi
@@ -9,8 +14,8 @@ or while configuring a device.
 
 The project is purely instructional: it does not connect to a router, send
 configuration commands, store credentials, or change a device. Instead, it
-presents focused, visual guides that explain where each setting is located and
-what it is used for.
+presents focused, visual guides and configuration animations that explain where
+each setting is located, what action to take, and what the setting is used for.
 
 ## What the site shows
 
@@ -26,10 +31,19 @@ TechSupport style and supporting screenshots or guided visual steps.
 | TACACS+ | Centralized administrative access, including more granular authorization controls. |
 | Syslog | Forwarding router events to a remote syslog server for monitoring, troubleshooting, and auditing. |
 
-The module pages are designed as practical walkthroughs. They identify the
-relevant router interface area, describe the setting to change, and show the
-expected configuration action. This makes the site useful as a quick reference
-during training or as preparation before working on a live device.
+Each module page contains an animated, step-by-step router configuration
+walkthrough. The animation highlights the relevant area of the router interface
+and progresses through the actions required for that topic. Learners can use
+the controls to pause, resume, or move between steps while reviewing each
+configuration action.
+
+![Example of an animated configuration walkthrough](config_pages_steps.png)
+
+*Figure 2. A module animation guides the learner through the router
+configuration steps.*
+
+These walkthroughs make the site useful as a quick reference during training
+or as preparation before working on a live device.
 
 ## How to use it
 
@@ -38,9 +52,11 @@ stored locally in this directory.
 
 1. Open `index.html` in a modern web browser.
 2. Select one of the five cards on the dashboard.
-3. Read the module instructions and follow the visual guidance for the chosen
-   configuration topic.
-4. Return to the dashboard and continue with another module as needed.
+3. Read the module instructions and follow the animated visual guidance for
+   the chosen configuration topic.
+4. Use the **Pause/Resume**, previous, and next controls to review an
+   animation at your own pace.
+5. Return to the dashboard and continue with another module as needed.
 
 For the best learning flow, start with **Authentication**, then review **User
 Groups**, and finally choose the centralized-access or logging topic that
