@@ -246,7 +246,7 @@ app.mount("/static", StaticFiles(directory=BASE_DIR / "static"), name="static")
 app.mount("/img", StaticFiles(directory=BASE_DIR / "img"), name="img")
 app.mount(
     "/config",
-    StaticFiles(directory=BASE_DIR / "radius-tacs-syslog-paginas-configuracion", html=True),
+    StaticFiles(directory=BASE_DIR / "config_pages", html=True),
     name="config",
 )
 
