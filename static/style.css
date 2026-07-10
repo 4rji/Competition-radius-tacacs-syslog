@@ -264,6 +264,32 @@ h1 {
   border-color: rgba(226, 77, 77, 0.55);
 }
 
+.config-link {
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+  padding: 0 18px;
+  border-radius: 999px;
+  font-weight: 750;
+  font-size: inherit;
+  color: var(--ink-soft);
+  background: transparent;
+  border: 1px solid var(--control-border);
+  text-decoration: none;
+  transition: 160ms ease;
+}
+
+.config-link:hover {
+  color: var(--ink);
+  background: var(--control-hover);
+  border-color: var(--line);
+}
+
+.config-link:focus-visible {
+  outline: 3px solid rgba(114, 190, 68, 0.32);
+  outline-offset: 2px;
+}
+
 .theme-toggle:focus-visible,
 .winner-button:focus-visible,
 .reset-button:focus-visible,

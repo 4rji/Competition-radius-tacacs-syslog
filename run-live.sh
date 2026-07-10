@@ -31,7 +31,7 @@ trap cleanup EXIT INT TERM
 # Le doy un segundo a tcpdump para abrir el socket antes de arrancar la app.
 sleep 1
 
-echo "Arrancando scoreboard (live) -> http://localhost:8000"
+echo "Arrancando scoreboard (live) -> http://localhost:8001"
 LOG_MODE=live \
 LIVE_FROM_START=true \
 LIVE_LOG_FILES="$CAP_FILE,$SYSLOG_FILE,$TACACS_FILE" \

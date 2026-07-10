@@ -244,6 +244,11 @@ async def lifespan(_: FastAPI):
 app = FastAPI(title="Digi Access Scoreboard", lifespan=lifespan)
 app.mount("/static", StaticFiles(directory=BASE_DIR / "static"), name="static")
 app.mount("/img", StaticFiles(directory=BASE_DIR / "img"), name="img")
+app.mount(
+    "/config",
+    StaticFiles(directory=BASE_DIR / "radius-tacs-syslog-paginas-configuracion", html=True),
+    name="config",
+)
 
 
 @app.get("/", include_in_schema=False)
@@ -292,4 +297,4 @@ async def websocket_endpoint(websocket: WebSocket) -> None:
 if __name__ == "__main__":
     import uvicorn
 
-    uvicorn.run("app:app", host="0.0.0.0", port=8000, reload=False)
+    uvicorn.run("app:app", host="0.0.0.0", port=8001, reload=False)

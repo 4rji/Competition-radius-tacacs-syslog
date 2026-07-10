@@ -1,0 +1,500 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="Digi router configuration training for authentication, groups, RADIUS, TACACS+, and syslog.">
+  <title>Digi Router Configuration Training</title>
+  <link rel="icon" type="image/png" href="digiicono.png">
+  <style>
+    :root {
+      --ink: #17212b;
+      --muted: #65707c;
+      --line: #dce3e8;
+      --surface: #ffffff;
+      --soft: #f3f6f7;
+      --green: #67bd3c;
+      --green-dark: #3e8f22;
+      --navy: #172b3b;
+      --shadow: 0 18px 50px rgba(23, 43, 59, 0.09);
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    html {
+      scroll-behavior: smooth;
+    }
+
+    body {
+      margin: 0;
+      color: var(--ink);
+      background:
+        radial-gradient(circle at 92% 8%, rgba(103, 189, 60, 0.14), transparent 24rem),
+        var(--soft);
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      line-height: 1.5;
+    }
+
+    a {
+      color: inherit;
+    }
+
+    .site-header {
+      position: sticky;
+      top: 0;
+      z-index: 10;
+      border-bottom: 1px solid rgba(220, 227, 232, 0.9);
+      background: rgba(255, 255, 255, 0.92);
+      backdrop-filter: blur(16px);
+    }
+
+    .header-inner,
+    main,
+    .footer-inner {
+      width: min(1120px, calc(100% - 40px));
+      margin-inline: auto;
+    }
+
+    .header-inner {
+      min-height: 82px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 24px;
+    }
+
+    .brand {
+      display: inline-flex;
+      align-items: center;
+      text-decoration: none;
+    }
+
+    .brand img {
+      display: block;
+      width: 190px;
+      height: auto;
+    }
+
+    .header-label {
+      color: var(--muted);
+      font-size: 0.78rem;
+      font-weight: 750;
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+    }
+
+    main {
+      padding: 84px 0 96px;
+    }
+
+    .hero {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) 280px;
+      align-items: center;
+      gap: 72px;
+      margin-bottom: 72px;
+    }
+
+    .eyebrow {
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+      margin: 0 0 18px;
+      color: var(--green-dark);
+      font-size: 0.78rem;
+      font-weight: 800;
+      letter-spacing: 0.15em;
+      text-transform: uppercase;
+    }
+
+    .eyebrow::before {
+      width: 28px;
+      height: 3px;
+      content: "";
+      background: var(--green);
+      border-radius: 999px;
+    }
+
+    h1 {
+      max-width: 780px;
+      margin: 0;
+      font-size: clamp(2.6rem, 6vw, 5rem);
+      line-height: 0.98;
+      letter-spacing: -0.055em;
+    }
+
+    .hero-copy {
+      max-width: 710px;
+      margin: 28px 0 0;
+      color: var(--muted);
+      font-size: clamp(1.03rem, 2vw, 1.2rem);
+    }
+
+    .hero-copy strong {
+      color: var(--ink);
+    }
+
+    .hero-icon-wrap {
+      position: relative;
+    }
+
+    .hero-icon-wrap::before {
+      position: absolute;
+      inset: -20px;
+      z-index: -1;
+      content: "";
+      border: 1px solid rgba(103, 189, 60, 0.28);
+      border-radius: 38px;
+      transform: rotate(5deg);
+    }
+
+    .hero-icon {
+      display: block;
+      width: 100%;
+      border-radius: 34px;
+      box-shadow: var(--shadow);
+    }
+
+    .section-heading {
+      display: flex;
+      align-items: end;
+      justify-content: space-between;
+      gap: 24px;
+      margin-bottom: 24px;
+    }
+
+    .section-heading h2 {
+      margin: 0;
+      font-size: clamp(1.7rem, 3vw, 2.25rem);
+      letter-spacing: -0.035em;
+    }
+
+    .section-heading p {
+      margin: 0 0 5px;
+      color: var(--muted);
+      font-size: 0.95rem;
+    }
+
+    .module-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 18px;
+    }
+
+    .module-card {
+      position: relative;
+      min-height: 240px;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      overflow: hidden;
+      padding: 30px;
+      border: 1px solid var(--line);
+      border-radius: 22px;
+      background: var(--surface);
+      box-shadow: 0 5px 20px rgba(23, 43, 59, 0.035);
+      text-decoration: none;
+      transition: transform 180ms ease, border-color 180ms ease, box-shadow 180ms ease;
+    }
+
+    .module-card::after {
+      position: absolute;
+      right: -40px;
+      bottom: -80px;
+      width: 180px;
+      height: 180px;
+      content: "";
+      background: rgba(103, 189, 60, 0.08);
+      border-radius: 50%;
+      transition: transform 180ms ease;
+    }
+
+    .module-card:hover,
+    .module-card:focus-visible {
+      border-color: rgba(103, 189, 60, 0.75);
+      box-shadow: var(--shadow);
+      outline: none;
+      transform: translateY(-4px);
+    }
+
+    .module-card:hover::after,
+    .module-card:focus-visible::after {
+      transform: scale(1.18);
+    }
+
+    .module-card.featured {
+      grid-column: span 2;
+      min-height: 260px;
+      color: #ffffff;
+      border-color: var(--navy);
+      background:
+        linear-gradient(100deg, rgba(23, 43, 59, 0.98), rgba(23, 43, 59, 0.92)),
+        url("img/authentication.png") center / cover;
+    }
+
+    .module-card.featured::after {
+      right: -10px;
+      bottom: -120px;
+      width: 310px;
+      height: 310px;
+      background: rgba(103, 189, 60, 0.16);
+    }
+
+    .module-top {
+      position: relative;
+      z-index: 1;
+    }
+
+    .module-number {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-width: 42px;
+      height: 28px;
+      padding: 0 10px;
+      color: var(--green-dark);
+      border: 1px solid rgba(103, 189, 60, 0.36);
+      border-radius: 999px;
+      background: rgba(103, 189, 60, 0.09);
+      font-size: 0.72rem;
+      font-weight: 850;
+      letter-spacing: 0.08em;
+    }
+
+    .featured .module-number {
+      color: #dff9d3;
+      border-color: rgba(151, 221, 113, 0.42);
+      background: rgba(103, 189, 60, 0.18);
+    }
+
+    .module-card h3 {
+      margin: 24px 0 9px;
+      font-size: 1.65rem;
+      letter-spacing: -0.035em;
+    }
+
+    .module-card p {
+      max-width: 600px;
+      margin: 0;
+      color: var(--muted);
+    }
+
+    .featured p {
+      color: #c7d1d8;
+    }
+
+    .module-link {
+      position: relative;
+      z-index: 1;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+      margin-top: 28px;
+      color: var(--ink);
+      font-size: 0.86rem;
+      font-weight: 800;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+    }
+
+    .featured .module-link {
+      color: #ffffff;
+    }
+
+    .arrow {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 38px;
+      height: 38px;
+      flex: 0 0 38px;
+      color: #ffffff;
+      background: var(--green);
+      border-radius: 50%;
+      font-size: 1.15rem;
+      transition: transform 180ms ease, background 180ms ease;
+    }
+
+    .module-card:hover .arrow,
+    .module-card:focus-visible .arrow {
+      background: var(--green-dark);
+      transform: translateX(3px);
+    }
+
+    footer {
+      color: #bfccd4;
+      background: var(--navy);
+    }
+
+    .footer-inner {
+      min-height: 94px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 24px;
+      font-size: 0.86rem;
+    }
+
+    .footer-inner strong {
+      color: #ffffff;
+    }
+
+    @media (max-width: 760px) {
+      .header-inner {
+        min-height: 70px;
+      }
+
+      .brand img {
+        width: 150px;
+      }
+
+      .header-label {
+        display: none;
+      }
+
+      main {
+        padding: 56px 0 72px;
+      }
+
+      .hero {
+        grid-template-columns: 1fr;
+        gap: 38px;
+        margin-bottom: 58px;
+      }
+
+      .hero-icon-wrap {
+        width: min(210px, 58vw);
+      }
+
+      .section-heading {
+        align-items: start;
+        flex-direction: column;
+        gap: 8px;
+      }
+
+      .module-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .module-card.featured {
+        grid-column: auto;
+      }
+
+      .module-card {
+        min-height: 225px;
+        padding: 26px;
+      }
+
+      .footer-inner {
+        min-height: 110px;
+        align-items: flex-start;
+        justify-content: center;
+        flex-direction: column;
+        gap: 4px;
+      }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      html {
+        scroll-behavior: auto;
+      }
+
+      .module-card,
+      .module-card::after,
+      .arrow {
+        transition: none;
+      }
+    }
+  </style>
+</head>
+<body>
+  <header class="site-header">
+    <div class="header-inner">
+      <a class="brand" href="index.html" aria-label="Digi TechSupport training home">
+        <img src="digitechsupport.png" alt="Digi TechSupport">
+      </a>
+      <span class="header-label">Router configuration training</span>
+    </div>
+  </header>
+
+  <main>
+    <section class="hero" aria-labelledby="page-title">
+      <div>
+        <p class="eyebrow">Digi router learning center</p>
+        <h1 id="page-title">Configure with confidence.</h1>
+        <p class="hero-copy">
+          Learn how to configure essential authentication, access control, and logging services on a Digi router.
+          <strong>Click any training module below to begin.</strong>
+        </p>
+      </div>
+      <div class="hero-icon-wrap" aria-hidden="true">
+        <img class="hero-icon" src="digiicono.png" alt="">
+      </div>
+    </section>
+
+    <section aria-labelledby="modules-title">
+      <div class="section-heading">
+        <h2 id="modules-title">Training modules</h2>
+        <p>Five practical, self-paced configuration guides</p>
+      </div>
+
+      <div class="module-grid">
+        <a class="module-card featured" href="Authentication.html">
+          <div class="module-top">
+            <span class="module-number">01</span>
+            <h3>Authentication</h3>
+            <p>Start with the fundamentals of user authentication and learn how a Digi router validates access.</p>
+          </div>
+          <span class="module-link">Open training <span class="arrow" aria-hidden="true">→</span></span>
+        </a>
+
+        <a class="module-card" href="Groups.html">
+          <div class="module-top">
+            <span class="module-number">02</span>
+            <h3>User Groups</h3>
+            <p>Organize users and apply consistent permissions through group-based access controls.</p>
+          </div>
+          <span class="module-link">Open training <span class="arrow" aria-hidden="true">→</span></span>
+        </a>
+
+        <a class="module-card" href="radius.html">
+          <div class="module-top">
+            <span class="module-number">03</span>
+            <h3>RADIUS</h3>
+            <p>Connect centralized authentication, authorization, and accounting services to your router.</p>
+          </div>
+          <span class="module-link">Open training <span class="arrow" aria-hidden="true">→</span></span>
+        </a>
+
+        <a class="module-card" href="TACACS.html">
+          <div class="module-top">
+            <span class="module-number">04</span>
+            <h3>TACACS+</h3>
+            <p>Configure administrative access with centralized control and command-level authorization.</p>
+          </div>
+          <span class="module-link">Open training <span class="arrow" aria-hidden="true">→</span></span>
+        </a>
+
+        <a class="module-card" href="Syslog.html">
+          <div class="module-top">
+            <span class="module-number">05</span>
+            <h3>Syslog</h3>
+            <p>Forward system events to a remote server for monitoring, troubleshooting, and auditing.</p>
+          </div>
+          <span class="module-link">Open training <span class="arrow" aria-hidden="true">→</span></span>
+        </a>
+      </div>
+    </section>
+  </main>
+
+  <footer>
+    <div class="footer-inner">
+      <span><strong>Digi TechSupport</strong> · Router configuration training</span>
+      <span>Select a module to start learning.</span>
+    </div>
+  </footer>
+</body>
+</html>
