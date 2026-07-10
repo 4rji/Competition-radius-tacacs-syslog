@@ -227,11 +227,11 @@
     .module-card.featured {
       grid-column: span 2;
       min-height: 260px;
-      color: #ffffff;
-      border-color: var(--navy);
+      border-color: rgba(103, 189, 60, 0.45);
       background:
-        linear-gradient(100deg, rgba(23, 43, 59, 0.98), rgba(23, 43, 59, 0.92)),
-        url("img/authentication.png") center / cover;
+        linear-gradient(110deg, rgba(103, 189, 60, 0.1) 0%, rgba(103, 189, 60, 0.03) 100%),
+        var(--surface);
+      box-shadow: 0 5px 28px rgba(103, 189, 60, 0.14);
     }
 
     .module-card.featured::after {
@@ -239,7 +239,24 @@
       bottom: -120px;
       width: 310px;
       height: 310px;
-      background: rgba(103, 189, 60, 0.16);
+      background: rgba(103, 189, 60, 0.12);
+    }
+
+    .start-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      margin-left: 10px;
+      padding: 2px 10px;
+      color: var(--green-dark);
+      border: 1px solid rgba(103, 189, 60, 0.4);
+      border-radius: 999px;
+      background: rgba(103, 189, 60, 0.12);
+      font-size: 0.68rem;
+      font-weight: 850;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      vertical-align: middle;
     }
 
     .module-top {
@@ -264,9 +281,9 @@
     }
 
     .featured .module-number {
-      color: #dff9d3;
-      border-color: rgba(151, 221, 113, 0.42);
-      background: rgba(103, 189, 60, 0.18);
+      color: var(--green-dark);
+      border-color: rgba(103, 189, 60, 0.36);
+      background: rgba(103, 189, 60, 0.12);
     }
 
     .module-card h3 {
@@ -279,10 +296,6 @@
       max-width: 600px;
       margin: 0;
       color: var(--muted);
-    }
-
-    .featured p {
-      color: #c7d1d8;
     }
 
     .module-link {
@@ -298,10 +311,6 @@
       font-weight: 800;
       letter-spacing: 0.04em;
       text-transform: uppercase;
-    }
-
-    .featured .module-link {
-      color: #ffffff;
     }
 
     .arrow {
@@ -426,8 +435,8 @@
         <p class="eyebrow">Digi router learning center</p>
         <h1 id="page-title">Configure with confidence.</h1>
         <p class="hero-copy">
-          Learn how to configure essential authentication, access control, and logging services on a Digi router.
-          <strong>Click any training module below to begin.</strong>
+          Learn how to configure Syslog, Authentication, Groups, RADIUS, and TACACS+ on a Digi router.
+          <strong>Start with module 01 and follow each step in order.</strong>
         </p>
       </div>
       <div class="hero-icon-wrap" aria-hidden="true">
@@ -438,51 +447,51 @@
     <section aria-labelledby="modules-title">
       <div class="section-heading">
         <h2 id="modules-title">Training modules</h2>
-        <p>Five practical, self-paced configuration guides</p>
+        <p>Follow the steps in order — each module builds on the previous one</p>
       </div>
 
       <div class="module-grid">
-        <a class="module-card featured" href="Authentication.html">
+        <a class="module-card featured" href="Syslog.html">
           <div class="module-top">
-            <span class="module-number">01</span>
+            <span class="module-number">01 <span class="start-badge">Start here</span></span>
+            <h3>Syslog</h3>
+            <p>Begin here — configure your router to forward system events to a remote syslog server for monitoring, troubleshooting, and auditing. This is the foundation for visibility into all subsequent services.</p>
+          </div>
+          <span class="module-link">Open training <span class="arrow" aria-hidden="true">→</span></span>
+        </a>
+
+        <a class="module-card" href="Authentication.html">
+          <div class="module-top">
+            <span class="module-number">02</span>
             <h3>Authentication</h3>
-            <p>Start with the fundamentals of user authentication and learn how a Digi router validates access.</p>
+            <p>Set up user authentication to define how the Digi router validates access. This step controls who can log in before any group or AAA policy applies.</p>
           </div>
           <span class="module-link">Open training <span class="arrow" aria-hidden="true">→</span></span>
         </a>
 
         <a class="module-card" href="Groups.html">
           <div class="module-top">
-            <span class="module-number">02</span>
+            <span class="module-number">03</span>
             <h3>User Groups</h3>
-            <p>Organize users and apply consistent permissions through group-based access controls.</p>
+            <p>Organize users into groups and apply consistent permissions through group-based access controls. Requires authentication to be configured first.</p>
           </div>
           <span class="module-link">Open training <span class="arrow" aria-hidden="true">→</span></span>
         </a>
 
         <a class="module-card" href="radius.html">
           <div class="module-top">
-            <span class="module-number">03</span>
+            <span class="module-number">04</span>
             <h3>RADIUS</h3>
-            <p>Connect centralized authentication, authorization, and accounting services to your router.</p>
+            <p>Connect centralized RADIUS authentication, authorization, and accounting to your router. Extends the local auth and group policies you configured in the previous steps.</p>
           </div>
           <span class="module-link">Open training <span class="arrow" aria-hidden="true">→</span></span>
         </a>
 
         <a class="module-card" href="TACACS.html">
           <div class="module-top">
-            <span class="module-number">04</span>
-            <h3>TACACS+</h3>
-            <p>Configure administrative access with centralized control and command-level authorization.</p>
-          </div>
-          <span class="module-link">Open training <span class="arrow" aria-hidden="true">→</span></span>
-        </a>
-
-        <a class="module-card" href="Syslog.html">
-          <div class="module-top">
             <span class="module-number">05</span>
-            <h3>Syslog</h3>
-            <p>Forward system events to a remote server for monitoring, troubleshooting, and auditing.</p>
+            <h3>TACACS+</h3>
+            <p>Complete the setup with TACACS+ for administrative access, centralized command-level authorization, and per-session accounting.</p>
           </div>
           <span class="module-link">Open training <span class="arrow" aria-hidden="true">→</span></span>
         </a>
