@@ -1,0 +1,341 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="Digi router configuration training for authentication, groups, RADIUS, TACACS+, and syslog.">
+  <title>Digi Router Configuration Training</title>
+  <style>
+    :root {
+      --ink: #17212b;
+      --muted: #65707c;
+      --line: #dce3e8;
+      --surface: #ffffff;
+      --soft: #f3f6f7;
+      --green: #67bd3c;
+      --green-dark: #3e8f22;
+      --navy: #172b3b;
+      --shadow: 0 18px 50px rgba(23, 43, 59, 0.09);
+    }
+    * { box-sizing: border-box; }
+    html { scroll-behavior: smooth; }
+    body {
+      margin: 0; color: var(--ink);
+      background: radial-gradient(circle at 92% 8%, rgba(103, 189, 60, 0.14), transparent 24rem), var(--soft);
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      line-height: 1.5;
+    }
+    a { color: inherit; }
+
+    /* ── Shell ── */
+    .shell { display: flex; flex-direction: column; min-height: 100vh; }
+    .shell.module-open { height: 100vh; overflow: hidden; }
+
+    /* ── Header ── */
+    .site-header {
+      position: sticky; top: 0; z-index: 10;
+      border-bottom: 1px solid rgba(220, 227, 232, 0.9);
+      background: rgba(255, 255, 255, 0.92);
+      backdrop-filter: blur(16px);
+    }
+    .header-inner {
+      width: min(1120px, calc(100% - 40px)); margin-inline: auto;
+      min-height: 82px; display: flex; align-items: center; justify-content: space-between; gap: 24px;
+    }
+    .brand {
+      display: inline-flex; align-items: center; gap: 14px; text-decoration: none;
+      cursor: pointer; border: none; background: none; padding: 0; font: inherit;
+    }
+    .brand-logo {
+      display: grid; place-items: center; width: 48px; height: 48px; border-radius: 12px;
+      background: linear-gradient(145deg, #2a5c14, #3e8f22); font-size: 1.6rem; flex-shrink: 0;
+    }
+    .brand-name { font-size: 1.05rem; font-weight: 800; color: var(--ink); letter-spacing: -0.02em; }
+    .header-label { color: var(--muted); font-size: 0.78rem; font-weight: 750; letter-spacing: 0.14em; text-transform: uppercase; }
+    .module-nav { display: none; align-items: center; gap: 10px; padding: 0 0 0 4px; }
+    .module-nav.visible { display: flex; }
+    .back-btn {
+      display: inline-flex; align-items: center; gap: 8px; height: 38px; padding: 0 16px;
+      border: 1px solid var(--line); border-radius: 999px; background: var(--surface);
+      color: var(--ink); font: inherit; font-size: 0.86rem; font-weight: 750; cursor: pointer;
+      transition: border-color 160ms, background 160ms;
+    }
+    .back-btn:hover { border-color: var(--green); background: rgba(103, 189, 60, 0.06); }
+    .breadcrumb-sep { color: var(--muted); font-size: 0.9rem; }
+    .breadcrumb-current { color: var(--ink); font-size: 0.9rem; font-weight: 700; }
+
+    /* ── Tab bar ── */
+    .tab-bar {
+      display: none; width: min(1120px, calc(100% - 40px)); margin-inline: auto;
+      gap: 4px; padding: 0 0 12px; overflow-x: auto; scrollbar-width: none;
+    }
+    .tab-bar::-webkit-scrollbar { display: none; }
+    .tab-bar.visible { display: flex; }
+    .tab-btn {
+      display: inline-flex; align-items: center; gap: 8px; white-space: nowrap;
+      height: 36px; padding: 0 14px; border-radius: 999px;
+      border: 1px solid var(--line); background: var(--surface);
+      color: var(--muted); font: inherit; font-size: 0.82rem; font-weight: 750; cursor: pointer;
+      transition: border-color 160ms, background 160ms, color 160ms;
+    }
+    .tab-btn:hover { border-color: var(--green); color: var(--ink); background: rgba(103, 189, 60, 0.06); }
+    .tab-btn.active { border-color: var(--green); color: var(--green-dark); background: rgba(103, 189, 60, 0.1); }
+    .tab-num { font-size: 0.72rem; font-weight: 850; opacity: 0.6; }
+
+    /* ── Home content ── */
+    main { width: min(1120px, calc(100% - 40px)); margin-inline: auto; padding: 84px 0 96px; }
+    .hero { display: grid; grid-template-columns: minmax(0, 1fr) 260px; align-items: center; gap: 72px; margin-bottom: 72px; }
+    .eyebrow { display: inline-flex; align-items: center; gap: 10px; margin: 0 0 18px; color: var(--green-dark); font-size: 0.78rem; font-weight: 800; letter-spacing: 0.15em; text-transform: uppercase; }
+    .eyebrow::before { width: 28px; height: 3px; content: ""; background: var(--green); border-radius: 999px; }
+    h1 { max-width: 780px; margin: 0; font-size: clamp(2.6rem, 6vw, 5rem); line-height: 0.98; letter-spacing: -0.055em; }
+    h2 { margin: 0; font-size: clamp(1.7rem, 3vw, 2.25rem); letter-spacing: -0.035em; }
+    .hero-copy { max-width: 710px; margin: 28px 0 0; color: var(--muted); font-size: clamp(1.03rem, 2vw, 1.2rem); }
+    .hero-copy strong { color: var(--ink); }
+    .hero-visual { display: grid; place-items: center; width: 100%; aspect-ratio: 1; border-radius: 34px; background: linear-gradient(145deg, rgba(103,189,60,0.15), rgba(62,143,34,0.08)); border: 1px solid rgba(103, 189, 60, 0.3); box-shadow: var(--shadow); font-size: 6rem; }
+    .section-heading { display: flex; align-items: end; justify-content: space-between; gap: 24px; margin-bottom: 24px; }
+    .section-heading p { margin: 0 0 5px; color: var(--muted); font-size: 0.95rem; }
+    .module-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 18px; }
+    .module-card {
+      position: relative; min-height: 240px; display: flex; flex-direction: column;
+      justify-content: space-between; overflow: hidden; padding: 30px;
+      border: 1px solid var(--line); border-radius: 22px; background: var(--surface);
+      box-shadow: 0 5px 20px rgba(23, 43, 59, 0.035); cursor: pointer;
+      transition: transform 180ms ease, border-color 180ms ease, box-shadow 180ms ease;
+    }
+    .module-card::after { position: absolute; right: -40px; bottom: -80px; width: 180px; height: 180px; content: ""; background: rgba(103, 189, 60, 0.08); border-radius: 50%; transition: transform 180ms ease; }
+    .module-card:hover, .module-card:focus-visible { border-color: rgba(103, 189, 60, 0.75); box-shadow: var(--shadow); outline: none; transform: translateY(-4px); }
+    .module-card:hover::after, .module-card:focus-visible::after { transform: scale(1.18); }
+    .module-card.featured { grid-column: span 2; min-height: 260px; border-color: rgba(103, 189, 60, 0.45); background: linear-gradient(110deg, rgba(103, 189, 60, 0.1) 0%, rgba(103, 189, 60, 0.03) 100%), var(--surface); box-shadow: 0 5px 28px rgba(103, 189, 60, 0.14); }
+    .module-card.featured::after { right: -10px; bottom: -120px; width: 310px; height: 310px; background: rgba(103, 189, 60, 0.12); }
+    .start-badge { display: inline-flex; align-items: center; gap: 6px; margin-left: 10px; padding: 2px 10px; color: var(--green-dark); border: 1px solid rgba(103, 189, 60, 0.4); border-radius: 999px; background: rgba(103, 189, 60, 0.12); font-size: 0.68rem; font-weight: 850; letter-spacing: 0.1em; text-transform: uppercase; vertical-align: middle; }
+    .module-top { position: relative; z-index: 1; }
+    .module-number { display: inline-flex; align-items: center; justify-content: center; min-width: 42px; height: 28px; padding: 0 10px; color: var(--green-dark); border: 1px solid rgba(103, 189, 60, 0.36); border-radius: 999px; background: rgba(103, 189, 60, 0.09); font-size: 0.72rem; font-weight: 850; letter-spacing: 0.08em; }
+    .module-card h3 { margin: 24px 0 9px; font-size: 1.65rem; letter-spacing: -0.035em; }
+    .module-card p { max-width: 600px; margin: 0; color: var(--muted); }
+    .module-link { position: relative; z-index: 1; display: flex; align-items: center; justify-content: space-between; gap: 16px; margin-top: 28px; color: var(--ink); font-size: 0.86rem; font-weight: 800; letter-spacing: 0.04em; text-transform: uppercase; }
+    .arrow { display: inline-flex; align-items: center; justify-content: center; width: 38px; height: 38px; flex: 0 0 38px; color: #fff; background: var(--green); border-radius: 50%; font-size: 1.15rem; transition: transform 180ms ease, background 180ms ease; }
+    .module-card:hover .arrow, .module-card:focus-visible .arrow { background: var(--green-dark); transform: translateX(3px); }
+
+    /* ── Module iframe view ── */
+    #module-view {
+      display: none; flex-direction: column;
+      position: fixed; inset: 0; top: 82px;
+      background: #0b1925; z-index: 5;
+    }
+    #module-view.visible { display: flex; }
+    #module-frame { flex: 1; width: 100%; height: 100%; border: none; background: #0b1925; }
+    .frame-loading {
+      position: absolute; inset: 0; display: grid; place-items: center;
+      background: #0b1925; color: rgba(255,255,255,0.45); font-size: 0.9rem;
+      pointer-events: none; transition: opacity 400ms;
+    }
+    .frame-loading.hidden { opacity: 0; pointer-events: none; }
+    .loading-spinner { width: 32px; height: 32px; border: 3px solid rgba(103,189,60,0.2); border-top-color: #67bd3c; border-radius: 50%; animation: spin 0.8s linear infinite; margin: 0 auto 12px; }
+
+    /* ── Footer ── */
+    footer { color: #bfccd4; background: var(--navy); }
+    .footer-inner { width: min(1120px, calc(100% - 40px)); margin-inline: auto; min-height: 94px; display: flex; align-items: center; justify-content: space-between; gap: 24px; font-size: 0.86rem; }
+    .footer-inner strong { color: #fff; }
+
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    @media (max-width: 760px) {
+      .header-inner { min-height: 70px; }
+      .header-label { display: none; }
+      main { padding: 56px 0 72px; }
+      .hero { grid-template-columns: 1fr; gap: 38px; margin-bottom: 58px; }
+      .hero-visual { width: min(180px, 50vw); font-size: 4rem; }
+      .section-heading { align-items: start; flex-direction: column; gap: 8px; }
+      .module-grid { grid-template-columns: 1fr; }
+      .module-card.featured { grid-column: auto; }
+      .module-card { min-height: 225px; padding: 26px; }
+      .footer-inner { min-height: 110px; align-items: flex-start; justify-content: center; flex-direction: column; gap: 4px; }
+      #module-view { top: 70px; }
+    }
+    @media (prefers-reduced-motion: reduce) {
+      html { scroll-behavior: auto; }
+      .module-card, .module-card::after, .arrow { transition: none; }
+      .loading-spinner { animation: none; }
+    }
+  </style>
+</head>
+<body>
+  <div class="shell" id="shell">
+
+    <header class="site-header">
+      <div class="header-inner">
+        <button class="brand" id="brand-btn" type="button" aria-label="Go to module list">
+          <span class="brand-logo" aria-hidden="true">🌐</span>
+          <span class="brand-name">Digi TechSupport</span>
+        </button>
+        <div class="module-nav" id="module-nav">
+          <button class="back-btn" id="back-btn" type="button">← Modules</button>
+          <span class="breadcrumb-sep" aria-hidden="true">/</span>
+          <span class="breadcrumb-current" id="breadcrumb-current">—</span>
+        </div>
+        <span class="header-label" id="header-label">Router configuration training</span>
+      </div>
+      <div class="tab-bar" id="tab-bar" role="tablist" aria-label="Training modules">
+        <button class="tab-btn" role="tab" data-module="Syslog.html"        data-label="Syslog"><span class="tab-num">01</span> Syslog</button>
+        <button class="tab-btn" role="tab" data-module="Authentication.html" data-label="Authentication"><span class="tab-num">02</span> Authentication</button>
+        <button class="tab-btn" role="tab" data-module="Groups.html"         data-label="User Groups"><span class="tab-num">03</span> User Groups</button>
+        <button class="tab-btn" role="tab" data-module="radius.html"         data-label="RADIUS"><span class="tab-num">04</span> RADIUS</button>
+        <button class="tab-btn" role="tab" data-module="TACACS.html"         data-label="TACACS+"><span class="tab-num">05</span> TACACS+</button>
+      </div>
+    </header>
+
+    <div id="home-view">
+      <main>
+        <section class="hero" aria-labelledby="page-title">
+          <div>
+            <p class="eyebrow">Digi router learning center</p>
+            <h1 id="page-title">Configure with confidence.</h1>
+            <p class="hero-copy">
+              Learn how to configure Syslog, Authentication, Groups, RADIUS, and TACACS+ on a Digi router.
+              <strong>Start with module 01 and follow each step in order.</strong>
+            </p>
+          </div>
+          <div class="hero-visual" aria-hidden="true">🌐</div>
+        </section>
+
+        <section aria-labelledby="modules-title">
+          <div class="section-heading">
+            <h2 id="modules-title">Training modules</h2>
+            <p>Follow the steps in order — each module builds on the previous one</p>
+          </div>
+
+          <div class="module-grid">
+            <div class="module-card featured" tabindex="0" role="button" data-module="Syslog.html" data-label="Syslog" aria-label="Open Syslog training">
+              <div class="module-top">
+                <span class="module-number">01 <span class="start-badge">Start here</span></span>
+                <h3>Syslog</h3>
+                <p>Begin here — configure your router to forward system events to a remote syslog server for monitoring, troubleshooting, and auditing. This is the foundation for visibility into all subsequent services.</p>
+              </div>
+              <span class="module-link">Open training <span class="arrow" aria-hidden="true">→</span></span>
+            </div>
+
+            <div class="module-card" tabindex="0" role="button" data-module="Authentication.html" data-label="Authentication" aria-label="Open Authentication training">
+              <div class="module-top">
+                <span class="module-number">02</span>
+                <h3>Authentication</h3>
+                <p>Set up user authentication to define how the Digi router validates access. This step controls who can log in before any group or AAA policy applies.</p>
+              </div>
+              <span class="module-link">Open training <span class="arrow" aria-hidden="true">→</span></span>
+            </div>
+
+            <div class="module-card" tabindex="0" role="button" data-module="Groups.html" data-label="User Groups" aria-label="Open User Groups training">
+              <div class="module-top">
+                <span class="module-number">03</span>
+                <h3>User Groups</h3>
+                <p>Organize users into groups and apply consistent permissions through group-based access controls. Requires authentication to be configured first.</p>
+              </div>
+              <span class="module-link">Open training <span class="arrow" aria-hidden="true">→</span></span>
+            </div>
+
+            <div class="module-card" tabindex="0" role="button" data-module="radius.html" data-label="RADIUS" aria-label="Open RADIUS training">
+              <div class="module-top">
+                <span class="module-number">04</span>
+                <h3>RADIUS</h3>
+                <p>Connect centralized RADIUS authentication, authorization, and accounting to your router. Extends the local auth and group policies you configured in the previous steps.</p>
+              </div>
+              <span class="module-link">Open training <span class="arrow" aria-hidden="true">→</span></span>
+            </div>
+
+            <div class="module-card" tabindex="0" role="button" data-module="TACACS.html" data-label="TACACS+" aria-label="Open TACACS+ training">
+              <div class="module-top">
+                <span class="module-number">05</span>
+                <h3>TACACS+</h3>
+                <p>Complete the setup with TACACS+ for administrative access, centralized command-level authorization, and per-session accounting.</p>
+              </div>
+              <span class="module-link">Open training <span class="arrow" aria-hidden="true">→</span></span>
+            </div>
+          </div>
+        </section>
+      </main>
+
+      <footer>
+        <div class="footer-inner">
+          <span><strong>Digi TechSupport</strong> · Router configuration training</span>
+          <span>Select a module to start learning.</span>
+        </div>
+      </footer>
+    </div>
+
+    <div id="module-view" aria-live="polite">
+      <div class="frame-loading" id="frame-loading">
+        <div>
+          <div class="loading-spinner"></div>
+          Loading module…
+        </div>
+      </div>
+      <iframe id="module-frame" title="Training module"></iframe>
+    </div>
+
+  </div>
+
+  <script>
+    const shell       = document.getElementById('shell');
+    const homeView    = document.getElementById('home-view');
+    const moduleView  = document.getElementById('module-view');
+    const moduleFrame = document.getElementById('module-frame');
+    const frameLoad   = document.getElementById('frame-loading');
+    const moduleNav   = document.getElementById('module-nav');
+    const tabBar      = document.getElementById('tab-bar');
+    const brandBtn    = document.getElementById('brand-btn');
+    const backBtn     = document.getElementById('back-btn');
+    const headerLabel = document.getElementById('header-label');
+    const breadcrumb  = document.getElementById('breadcrumb-current');
+
+    const BASE = 'config_pages/';
+    let current = null;
+
+    function openModule(file, label) {
+      current = file;
+      breadcrumb.textContent = label;
+      frameLoad.classList.remove('hidden');
+      moduleFrame.src = '';
+
+      homeView.style.display = 'none';
+      moduleView.classList.add('visible');
+      shell.classList.add('module-open');
+      moduleNav.classList.add('visible');
+      tabBar.classList.add('visible');
+      headerLabel.style.display = 'none';
+
+      document.querySelectorAll('.tab-btn').forEach(btn => {
+        btn.classList.toggle('active', btn.dataset.module === file);
+      });
+
+      moduleFrame.src = BASE + file;
+      moduleFrame.onload = () => frameLoad.classList.add('hidden');
+    }
+
+    function goHome() {
+      current = null;
+      moduleFrame.src = '';
+      homeView.style.display = '';
+      moduleView.classList.remove('visible');
+      shell.classList.remove('module-open');
+      moduleNav.classList.remove('visible');
+      tabBar.classList.remove('visible');
+      headerLabel.style.display = '';
+      document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+
+    document.querySelectorAll('.module-card').forEach(card => {
+      function activate() { openModule(card.dataset.module, card.dataset.label); }
+      card.addEventListener('click', activate);
+      card.addEventListener('keydown', e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); activate(); } });
+    });
+
+    document.querySelectorAll('.tab-btn').forEach(btn => {
+      btn.addEventListener('click', () => openModule(btn.dataset.module, btn.dataset.label));
+    });
+
+    brandBtn.addEventListener('click', goHome);
+    backBtn.addEventListener('click', goHome);
+    document.addEventListener('keydown', e => { if (e.key === 'Escape' && current) goHome(); });
+  </script>
+</body>
+</html>
