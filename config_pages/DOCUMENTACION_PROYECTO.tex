@@ -1,0 +1,242 @@
+\documentclass[12pt,letterpaper]{article}
+
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage[spanish,es-nodecimaldot]{babel}
+\usepackage{geometry}
+\usepackage{amsmath}
+\usepackage{booktabs}
+\usepackage{tabularx}
+\usepackage{enumitem}
+\usepackage[hidelinks]{hyperref}
+
+\geometry{margin=2.5cm}
+\setlength{\parindent}{0pt}
+\setlength{\parskip}{0.7em}
+\renewcommand{\arraystretch}{1.25}
+
+\title{Documentación del proyecto\\[0.3em]
+\large Guía interactiva para la configuración de routers Digi}
+\author{Nombre del autor o equipo}
+\date{\today}
+
+\begin{document}
+
+\maketitle
+
+\begin{abstract}
+Este proyecto consiste en una aplicación web estática orientada a la capacitación
+técnica y a la consulta rápida de procedimientos de configuración para routers
+Digi. La solución presenta páginas HTML independientes con instrucciones visuales
+y recorridos paso a paso para configurar Syslog, autenticación, grupos de usuarios,
+RADIUS y TACACS+. Su propósito es simplificar el aprendizaje, reducir el tiempo
+invertido en localizar opciones dentro de la interfaz del equipo y disminuir los
+errores asociados con la interpretación de documentación extensa.
+\end{abstract}
+
+\section{Tipo de proyecto}
+
+El proyecto se clasifica como una \textbf{aplicación web estática de capacitación
+técnica y apoyo operativo}. También puede describirse como una guía interactiva o
+un centro de aprendizaje de autoservicio para la configuración de routers Digi.
+
+Es una aplicación estática porque utiliza páginas HTML y recursos gráficos locales,
+sin requerir una base de datos, un servidor de aplicaciones ni un proceso de
+instalación. El usuario solamente necesita abrir el archivo \texttt{index.html} en
+un navegador web moderno. Debido a este diseño, el contenido puede utilizarse de
+forma local, compartirse con otros técnicos o publicarse en un servidor web
+sencillo.
+
+\section{Problema que atiende}
+
+La configuración de servicios de autenticación, autorización y registro en un
+router puede requerir consultar manuales extensos, buscar la ubicación exacta de
+cada opción y alternar repetidamente entre la documentación y la interfaz del
+dispositivo. Esto incrementa el tiempo de aprendizaje y puede provocar omisiones,
+especialmente cuando el técnico no realiza estas tareas de manera frecuente.
+
+El proyecto concentra los procedimientos principales en un mismo sitio y los
+convierte en recorridos visuales breves. De esta manera, el usuario puede identificar
+qué opción debe modificar, qué valor debe introducir y en qué orden debe completar
+el procedimiento.
+
+\section{Objetivo general}
+
+Proporcionar una herramienta visual, accesible y fácil de consultar que apoye la
+capacitación y la preparación de técnicos para configurar servicios esenciales en
+routers Digi.
+
+\subsection{Objetivos específicos}
+
+\begin{itemize}[leftmargin=*]
+    \item Centralizar en una sola interfaz los procedimientos de configuración más
+    importantes.
+    \item Mostrar cada procedimiento mediante instrucciones y pasos visuales.
+    \item Facilitar el aprendizaje autónomo sin depender constantemente de un
+    instructor.
+    \item Reducir el tiempo dedicado a buscar opciones en manuales o en la interfaz
+    del router.
+    \item Servir como referencia rápida antes de trabajar con un dispositivo real.
+    \item Promover configuraciones más consistentes al presentar siempre la misma
+    secuencia de trabajo.
+\end{itemize}
+
+\section{Alcance funcional}
+
+La página principal funciona como un panel de navegación hacia cinco módulos de
+capacitación. En conjunto, los módulos contienen 21 pasos guiados.
+
+\begin{table}[htbp]
+\centering
+\small
+\begin{tabularx}{\textwidth}{@{}p{2.7cm}p{1.5cm}X@{}}
+\toprule
+\textbf{Módulo} & \textbf{Pasos} & \textbf{Función} \\
+\midrule
+Syslog & 3 & Explica cómo habilitar el envío de eventos, indicar el servidor remoto y configurar el puerto y el protocolo de comunicación. \\
+Autenticación & 4 & Presenta cómo agregar y ordenar métodos de autenticación mediante RADIUS, TACACS+ y usuarios locales. \\
+Grupos de usuarios & 3 & Muestra cómo crear un grupo y asignar permisos y niveles de acceso de forma uniforme. \\
+RADIUS & 5 & Guía la definición del servidor, puerto, secreto compartido y opciones de comportamiento y diagnóstico. \\
+TACACS+ & 6 & Explica la configuración del servidor, puerto, secreto, atributos de grupo, servicio y modo autoritativo. \\
+\bottomrule
+\end{tabularx}
+\caption{Módulos incluidos en la aplicación.}
+\label{tab:modulos}
+\end{table}
+
+Cada módulo combina una imagen de la interfaz del router con una zona resaltada y
+un panel de instrucciones. Los pasos avanzan automáticamente, pero el usuario puede
+pausar la reproducción, reanudarla o desplazarse hacia adelante y hacia atrás. Esta
+interacción permite estudiar el procedimiento al ritmo de cada persona.
+
+\section{Funcionamiento de la solución}
+
+El flujo normal de uso es el siguiente:
+
+\begin{enumerate}[leftmargin=*]
+    \item El usuario abre \texttt{index.html} en un navegador.
+    \item Selecciona el módulo correspondiente a la tarea que desea aprender o
+    consultar.
+    \item La página muestra instrucciones, valores de referencia y una imagen de la
+    interfaz del router.
+    \item Un indicador visual resalta la sección que requiere atención en cada paso.
+    \item El usuario pausa, repite o adelanta el recorrido según sea necesario.
+    \item Con la secuencia comprendida y los datos del entorno confirmados, el
+    técnico puede realizar la configuración en el equipo real.
+\end{enumerate}
+
+La aplicación es exclusivamente instructiva. No se conecta al router, no almacena
+credenciales, no envía comandos y no modifica la configuración de ningún equipo.
+Esta separación permite utilizarla como material de práctica sin poner en riesgo un
+dispositivo de producción.
+
+\section{Utilidad y beneficios}
+
+\subsection{Capacitación más clara}
+
+La combinación de instrucciones breves, imágenes y resaltado visual facilita la
+relación entre la explicación técnica y el lugar exacto donde debe realizarse una
+acción. Esto resulta especialmente útil para personal nuevo o para técnicos que
+necesitan repasar un procedimiento que utilizan con poca frecuencia.
+
+\subsection{Referencia rápida durante la preparación}
+
+Los módulos permiten revisar un procedimiento antes de iniciar una ventana de
+mantenimiento. El técnico puede confirmar la secuencia y preparar previamente
+datos como direcciones IP, puertos, secretos compartidos, atributos y permisos.
+
+\subsection{Estandarización}
+
+Al presentar una secuencia uniforme, la herramienta ayuda a que diferentes personas
+sigan el mismo proceso de capacitación. Esto reduce la dependencia de explicaciones
+verbales y facilita la transferencia de conocimiento dentro del equipo.
+
+\subsection{Portabilidad y bajo costo de operación}
+
+La solución no necesita instalación ni infraestructura especializada. Puede abrirse
+sin conexión a Internet y copiarse a otro equipo conservando su funcionamiento. Al
+no existir un componente de servidor o una base de datos, el mantenimiento técnico
+es reducido.
+
+\section{Estimación del ahorro de tiempo}
+
+El ahorro se concentra en la etapa de \textbf{búsqueda, orientación y aprendizaje};
+no elimina el tiempo necesario para introducir valores, validar conectividad o
+probar la configuración en el router real.
+
+Como escenario de referencia, localizar y comprender un procedimiento mediante
+documentación convencional puede tomar entre 10 y 20 minutos. Revisar el mismo tema
+con un módulo visual concentrado puede tomar aproximadamente entre 3 y 7 minutos.
+En un escenario medio de 15 minutos frente a 5 minutos, la herramienta ahorra unos
+10 minutos por consulta, equivalentes a una reducción aproximada del 67\% en el
+tiempo de orientación.
+
+\begin{table}[htbp]
+\centering
+\small
+\begin{tabularx}{\textwidth}{@{}Xccc@{}}
+\toprule
+\textbf{Actividad} & \textbf{Método tradicional} & \textbf{Guía interactiva} & \textbf{Ahorro estimado} \\
+\midrule
+Consulta de un tema & 10--20 min & 3--7 min & 5--10 min \\
+Repaso de los cinco módulos & 50--100 min & 15--35 min & 35--65 min \\
+\bottomrule
+\end{tabularx}
+\caption{Estimación del tiempo dedicado a localizar y comprender los procedimientos.}
+\label{tab:ahorro}
+\end{table}
+
+Estas cifras son una estimación operativa y no el resultado de una prueba formal de
+usuarios. Para obtener una métrica propia de la organización se recomienda registrar
+el tiempo que varios técnicos necesitan para completar la misma tarea con y sin la
+guía, y calcular el ahorro con la ecuación:
+
+\[
+\text{Ahorro porcentual} =
+\frac{T_{\text{tradicional}} - T_{\text{guía}}}
+     {T_{\text{tradicional}}} \times 100.
+\]
+
+Además del tiempo directo, la herramienta puede reducir interrupciones a personal
+experimentado, repeticiones de capacitación y errores ocasionados por saltarse un
+paso. Estos beneficios indirectos deben evaluarse por separado según el volumen de
+usuarios y la frecuencia de las configuraciones.
+
+\section{Usuarios previstos y casos de uso}
+
+La solución está dirigida principalmente a técnicos de soporte, administradores de
+red, personal en capacitación, instructores y estudiantes de redes. Sus casos de uso
+principales son:
+
+\begin{itemize}[leftmargin=*]
+    \item inducción de nuevos integrantes del equipo;
+    \item repaso previo a una configuración o demostración;
+    \item apoyo visual durante una sesión de capacitación;
+    \item consulta rápida de pasos y parámetros;
+    \item material de estudio disponible sin conexión.
+\end{itemize}
+
+\section{Limitaciones y consideraciones de seguridad}
+
+La guía muestra procedimientos y valores de ejemplo, pero no sustituye la
+documentación oficial del modelo y la versión de firmware utilizados. Antes de
+aplicar una configuración en producción se deben verificar las direcciones IP, los
+puertos, los secretos compartidos, los permisos, las políticas de seguridad y las
+opciones disponibles en el equipo específico.
+
+Los secretos o credenciales reales no deben incorporarse en las páginas HTML ni en
+capturas destinadas a capacitación. También es necesario validar la configuración
+en un entorno controlado y mantener un mecanismo de recuperación antes de efectuar
+cambios que puedan afectar el acceso administrativo.
+
+\section{Conclusión}
+
+La guía interactiva para routers Digi transforma procedimientos técnicos en módulos
+visuales breves y accesibles. Su principal valor es centralizar el conocimiento,
+acelerar la orientación del usuario y ofrecer una experiencia de capacitación
+uniforme sin requerir infraestructura adicional. Aunque la estimación de ahorro debe
+validarse con mediciones internas, el proyecto tiene el potencial de disminuir de
+forma considerable el tiempo de consulta y de mejorar la preparación de los
+técnicos antes de intervenir un equipo real.
+
+\end{document}
